@@ -209,6 +209,7 @@ kubectl wait --for=condition=complete job/diracx-cms-issuer-1 --timeout=120s
 # 2. Initialize secrets (populates diracx-dynamic-secrets, diracx-jwks)
 kubectl apply -f jobs/diracx-cms-init-secrets.yaml
 kubectl wait --for=condition=complete job/diracx-cms-init-secrets --timeout=120s
+kubectl logs -l app.kubernetes.io/component=init-secrets
 
 # 3. Initialize SQL databases
 kubectl apply -f jobs/diracx-cms-init-sql.yaml
