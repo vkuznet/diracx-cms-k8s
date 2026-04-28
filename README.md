@@ -36,14 +36,14 @@ diracx-k8s/
 - A `StorageClass` that can fulfil `ReadWriteMany` for `pvc-cs-store`
   (e.g. NFS-backed, CephFS, AWS EFS, etc.)
 
-### ⚠ Before You Begin – Adapt Hostnames
+### Before You Begin – Adapt Hostnames
 
-Several resources contain the original demo hostname **`vkarm`**.
+Several resources contain the original hostname **`cms-diracx-test18.cern.ch`**.
 Search-and-replace it with your actual external hostname or IP:
 
 ```bash
 HOSTNAME=your.cluster.hostname.or.ip
-grep -rl 'vkarm' . | xargs sed -i "s/vkarm/${HOSTNAME}/g"
+grep -rl 'cms-diracx-test18.cern.ch' . | xargs sed -i "s/cms-diracx-test18.cern.ch/${HOSTNAME}/g"
 ```
 
 Resources affected:
@@ -52,7 +52,7 @@ Resources affected:
                                          `DIRACX_SERVICE_AUTH_ALLOWED_REDIRECTS`,
                                          `DIRACX_SERVICE_AUTH_TOKEN_ISSUER`
 
-### ⚠ StorageClass Names
+### StorageClass Names
 
 The PVCs were extracted from a kind cluster that used the `standard` storage class.
 If your cluster uses a different name, edit the relevant files:
@@ -61,8 +61,11 @@ If your cluster uses a different name, edit the relevant files:
 # list your storage classes
 kubectl get storageclass
 
-# replace 'standard' with your actual class name
-grep -rl 'storageClassName: standard' pvcs/ | xargs sed -i 's/storageClassName: standard/storageClassName: YOUR_CLASS/g'
+# at CERN k8s cluster we most likely to use either
+# cinder-standard or cinder-standard-delete class
+
+# replace 'cinder-standard-delete' with your actual class name
+grep -rl 'storageClassName: cinder-standard-delete' pvcs/ | xargs sed -i 's/storageClassName: standard/storageClassName: YOUR_CLASS/g'
 ```
 
 `pvc-cs-store` needs `ReadWriteMany` – if your storage class only supports `ReadWriteOnce`,
@@ -125,7 +128,7 @@ kubectl apply -f configmaps/
 
 ### Step 5 – Apply Secrets
 
-> ⚠ **Security note**: The secrets in this directory were exported from a demo cluster and
+> **Security note**: The secrets in this directory were exported from a demo cluster and
 > contain real (but demo-only) credentials such as MySQL passwords, MinIO root credentials,
 > and TLS private keys.  Before applying to a production cluster you should:
 > 1. Regenerate all passwords/keys
@@ -269,7 +272,7 @@ kubectl apply -f services/
 
 ### Step 14 – Apply Ingress
 
-Make sure you have replaced `vkarm` with your hostname (see Pre-requisites above), then:
+Make sure you have replaced `cms-diracx-test18.cern.ch` with your hostname (see Pre-requisites above), then:
 
 ```bash
 kubectl apply -f ingress/

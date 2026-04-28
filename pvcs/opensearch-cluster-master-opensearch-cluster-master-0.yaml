@@ -14,6 +14,6 @@ spec:
   resources:
     requests:
       storage: 8Gi
-  storageClassName: standard
+  storageClassName: cinder-standard-delete
   volumeMode: Filesystem
   volumeName: pvc-06e1540c-0672-4738-b11e-b8ceee76774b

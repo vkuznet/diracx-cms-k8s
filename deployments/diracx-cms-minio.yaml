@@ -49,7 +49,7 @@ spec:
         - name: MINIO_PROMETHEUS_AUTH_TYPE
           value: public
         - name: MINIO_BROWSER_REDIRECT_URL
-          value: http://vkarm:32001/
+          value: http://cms-diracx-test18.cern.ch:32001/
         image: quay.io/minio/minio:RELEASE.2023-06-19T19-52-50Z
         imagePullPolicy: IfNotPresent
         name: minio

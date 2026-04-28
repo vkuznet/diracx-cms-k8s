@@ -37,7 +37,7 @@ spec:
         - /entrypoint.sh
         env:
         - name: DIRACX_URL
-          value: https://vkarm:8000
+          value: https://cms-diracx-test18.cern.ch:8000
         - name: DIRACX_CA_PATH
           value: /ca/demo-ca.pem
         image: ghcr.io/diracgrid/diracx/client:v0.0.13
