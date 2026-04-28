@@ -31,6 +31,9 @@ spec:
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.11.0
     spec:
+      serviceAccountName: diracx-cms-mysql
+      securityContext:
+        fsGroup: 1001
       initContainers:
       - name: volume-permissions
         image: busybox
@@ -38,10 +41,17 @@ spec:
           - sh
           - -c
           - |
+            cp /configmap/my.cnf /etc/mysql/my.cnf
+            chmod 644 /etc/mysql/my.cnf
+            chown 1001:1001 /etc/mysql/my.cnf
             chown -R 1001:1001 /bitnami/mysql
         volumeMounts:
         - name: data
           mountPath: /bitnami/mysql
+        - name: config-source
+          mountPath: /configmap
+        - name: config-writable
+          mountPath: /etc/mysql
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -53,7 +63,10 @@ spec:
               topologyKey: kubernetes.io/hostname
             weight: 1
       containers:
-      - env:
+      - name: mysql
+        image: docker.io/bitnamilegacy/mysql:8.0.34-debian-11-r8
+        imagePullPolicy: IfNotPresent
+        env:
         - name: BITNAMI_DEBUG
           value: 'false'
         - name: MYSQL_ROOT_PASSWORD
@@ -68,93 +81,58 @@ spec:
             secretKeyRef:
               key: mysql-password
               name: mysql-secret
-        image: docker.io/bitnamilegacy/mysql:8.0.34-debian-11-r8
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          exec:
-            command:
-            - /bin/bash
-            - -ec
-            - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
-              \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin ping -h localhost -uroot -p\"${password_aux}\"\n"
-          failureThreshold: 30
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        name: mysql
         ports:
         - containerPort: 3306
           name: mysql
           protocol: TCP
+        startupProbe:
+          tcpSocket:
+            port: mysql
+          failureThreshold: 60
+          periodSeconds: 5
+          initialDelaySeconds: 10
         readinessProbe:
           exec:
             command:
             - /bin/bash
             - -ec
-            - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
-              \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin ping -h localhost -uroot -p\"${password_aux}\"\n"
+            - "mysqladmin ping -h 127.0.0.1 -uroot -p\"${MYSQL_ROOT_PASSWORD}\"\n"
           failureThreshold: 6
           initialDelaySeconds: 30
           periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        resources: {}
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1001
-        startupProbe:
+        livenessProbe:
           exec:
             command:
             - /bin/bash
             - -ec
-            - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
-              \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin ping -h localhost -uroot -p\"${password_aux}\"\n"
-          failureThreshold: 10
-          initialDelaySeconds: 15
+            - "mysqladmin ping -h 127.0.0.1 -uroot -p\"${MYSQL_ROOT_PASSWORD}\"\n"
+          failureThreshold: 30
+          initialDelaySeconds: 30
           periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
         volumeMounts:
         - mountPath: /bitnami/mysql
           name: data
         - mountPath: /docker-entrypoint-initdb.d
           name: custom-init-scripts
         - mountPath: /opt/bitnami/mysql/conf/my.cnf
-          name: config
+          name: config-writable
           subPath: my.cnf
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      securityContext:
-        fsGroup: 1001
-      serviceAccount: diracx-cms-mysql
-      serviceAccountName: diracx-cms-mysql
-      terminationGracePeriodSeconds: 30
       volumes:
-      - configMap:
-          defaultMode: 420
-          name: diracx-cms-mysql
-        name: config
-      - configMap:
-          defaultMode: 420
+      - name: config-source
+        configMap:
+          name: diracx-cms-mysql  # Source ConfigMap (Read-only)
+      - name: config-writable
+        emptyDir: {}              # Writable space for the initContainer to copy into
+      - name: custom-init-scripts
+        configMap:
           name: mysql-init-diracx-dbs
-        name: custom-init-scripts
   updateStrategy:
     type: RollingUpdate
   volumeClaimTemplates:
-  - apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app.kubernetes.io/component: primary
-        app.kubernetes.io/instance: diracx-cms
-        app.kubernetes.io/name: mysql
+  - metadata:
       name: data
     spec:
       accessModes:
