@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/instance: diracx-cms
     app.kubernetes.io/name: opensearch
-  name: opensearch-cluster-master-opensearch-cluster-master-0
+  name: opensearch-cluster-master
   namespace: default
 spec:
   accessModes:
