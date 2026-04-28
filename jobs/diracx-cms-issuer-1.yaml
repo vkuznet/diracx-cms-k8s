@@ -8,24 +8,16 @@ metadata:
 spec:
   activeDeadlineSeconds: 300
   backoffLimit: 6
-  completionMode: NonIndexed
-  completions: 1
-  manualSelector: false
-  parallelism: 1
-  podReplacementPolicy: TerminatingOrFailed
-  selector:
-    matchLabels:
-      batch.kubernetes.io/controller-uid: 4c8d08fe-a97a-433d-87d3-c091f38f7ec0
-  suspend: false
+  # Remove manualSelector: false (default is true for Jobs, let K8s handle it)
+  # Remove the 'selector' block entirely
   template:
     metadata:
       labels:
         app: cert-manager-issuer
-        batch.kubernetes.io/controller-uid: 4c8d08fe-a97a-433d-87d3-c091f38f7ec0
-        batch.kubernetes.io/job-name: diracx-cms-issuer-1
-        controller-uid: 4c8d08fe-a97a-433d-87d3-c091f38f7ec0
-        job-name: diracx-cms-issuer-1
         release: diracx-cms
+        # Remove batch.kubernetes.io/controller-uid
+        # Remove controller-uid
+        # Remove job-name (K8s adds this automatically)
     spec:
       containers:
       - command:
@@ -38,18 +30,12 @@ spec:
         resources:
           requests:
             cpu: 50m
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
         volumeMounts:
         - mountPath: /scripts
           name: scripts
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
-      schedulerName: default-scheduler
-      securityContext: {}
-      serviceAccount: diracx-cms-cert-manager-issuer
       serviceAccountName: diracx-cms-cert-manager-issuer
-      terminationGracePeriodSeconds: 30
       volumes:
       - configMap:
           defaultMode: 420
