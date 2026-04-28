@@ -77,7 +77,7 @@ spec:
             - -ec
             - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
               \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin ping -h 127.0.0.1 --socket=/opt/bitnami/mysql/tmp/mysql.sock -uroot -p\"${password_aux}\"\n"
+              fi\nmysqladmin ping --socket=/opt/bitnami/mysql/tmp/mysql.sock -uroot -p\"${password_aux}\"\n"
           failureThreshold: 30
           initialDelaySeconds: 30
           periodSeconds: 10
@@ -95,7 +95,7 @@ spec:
             - -ec
             - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
               \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin ping -h 127.0.0.1 --socket=/opt/bitnami/mysql/tmp/mysql.sock -uroot -p\"${password_aux}\"\n"
+              fi\nmysqladmin ping --socket=/opt/bitnami/mysql/tmp/mysql.sock -uroot -p\"${password_aux}\"\n"
           failureThreshold: 6
           initialDelaySeconds: 30
           periodSeconds: 10
@@ -112,7 +112,7 @@ spec:
             - -ec
             - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
               \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin ping -h 127.0.0.1 --socket=/opt/bitnami/mysql/tmp/mysql.sock -uroot -p\"${password_aux}\"\n"
+              fi\nmysqladmin ping --socket=/opt/bitnami/mysql/tmp/mysql.sock -uroot -p\"${password_aux}\"\n"
           failureThreshold: 10
           initialDelaySeconds: 15
           periodSeconds: 10
