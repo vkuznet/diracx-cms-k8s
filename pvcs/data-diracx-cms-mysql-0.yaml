@@ -11,10 +11,9 @@ metadata:
   namespace: default
 spec:
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
   resources:
     requests:
       storage: 8Gi
   storageClassName: cinder-standard-delete
   volumeMode: Filesystem
-  volumeName: pvc-97aa93a0-9fec-4e74-8dba-35c4fcb17c85

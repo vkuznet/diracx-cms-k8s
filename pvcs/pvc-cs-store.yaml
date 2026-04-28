@@ -13,4 +13,3 @@ spec:
       storage: 1Gi
   storageClassName: cinder-standard-delete
   volumeMode: Filesystem
-  volumeName: pv-cs-store
