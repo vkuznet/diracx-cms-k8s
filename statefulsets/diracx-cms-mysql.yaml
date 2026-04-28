@@ -82,7 +82,7 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 5
         name: mysql
         ports:
         - containerPort: 3306
@@ -112,12 +112,12 @@ spec:
             - -ec
             - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
               \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin status -uroot -p\"${password_aux}\"\n"
+              fi\nmysqladmin ping -uroot -p\"${password_aux}\"\n"
           failureThreshold: 10
           initialDelaySeconds: 15
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 5
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
