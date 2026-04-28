@@ -31,6 +31,17 @@ spec:
         app.kubernetes.io/name: mysql
         helm.sh/chart: mysql-9.11.0
     spec:
+      initContainers:
+      - name: volume-permissions
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            chown -R 1001:1001 /bitnami/mysql
+        volumeMounts:
+        - name: data
+          mountPath: /bitnami/mysql
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
