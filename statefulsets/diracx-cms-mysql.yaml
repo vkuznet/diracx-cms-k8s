@@ -77,9 +77,9 @@ spec:
             - -ec
             - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
               \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin status -uroot -p\"${password_aux}\"\n"
-          failureThreshold: 3
-          initialDelaySeconds: 5
+              fi\nmysqladmin ping -uroot -p\"${password_aux}\"\n"
+          failureThreshold: 30
+          initialDelaySeconds: 30
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
@@ -95,12 +95,12 @@ spec:
             - -ec
             - "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\"\
               \ ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\n\
-              fi\nmysqladmin status -uroot -p\"${password_aux}\"\n"
-          failureThreshold: 3
-          initialDelaySeconds: 5
+              fi\nmysqladmin ping -uroot -p\"${password_aux}\"\n"
+          failureThreshold: 6
+          initialDelaySeconds: 30
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 5
         resources: {}
         securityContext:
           runAsNonRoot: true
