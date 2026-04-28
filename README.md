@@ -181,6 +181,10 @@ kubectl get pvc -n default
 These must come up before the init jobs run.
 
 ```bash
+# if necessary delete previous statefulsets, e.g.
+kubectl delete statefulset diracx-cms-mysql
+
+# apply new one
 kubectl apply -f statefulsets/
 ```
 
