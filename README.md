@@ -170,7 +170,7 @@ kubectl get pvc -n default
 # All should show STATUS=Bound before continuing
 ```
 
-> **Note**: `pvc-diracx-code` was created in the demo with an empty `storageClassName`
+> **Note**: `pvc-diracx-code` was created in the demo cluster with an empty `storageClassName`
 > (bound to a kind host-path volume).  On an external cluster you may want to remove this
 > PVC and adjust the `diracx-cms-cli` deployment's volume spec to point at a real volume
 > containing the DiracX source code, or remove the volume mount entirely if you are running
