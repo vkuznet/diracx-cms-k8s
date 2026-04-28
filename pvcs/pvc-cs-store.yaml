@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  name: pvc-cs-store
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+  volumeMode: Filesystem
+  volumeName: pv-cs-store

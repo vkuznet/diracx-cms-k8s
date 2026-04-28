@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: minio
+    app.kubernetes.io/managed-by: Helm
+    chart: minio-5.0.11
+    heritage: Helm
+    release: diracx-cms
+  name: diracx-cms-minio-console
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    nodePort: 32001
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: minio
+    release: diracx-cms
+  sessionAffinity: None
+  type: NodePort

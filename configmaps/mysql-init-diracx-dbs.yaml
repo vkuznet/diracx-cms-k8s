@@ -1,0 +1,39 @@
+apiVersion: v1
+data:
+  init-diracx-dbs.sql: 'CREATE DATABASE IF NOT EXISTS `AuthDB`;
+
+    GRANT SELECT, INSERT, UPDATE, DELETE, INDEX, CREATE TEMPORARY TABLES, LOCK TABLES
+    ON AuthDB.* TO ''sqldiracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `JobDB`;
+
+    GRANT SELECT, INSERT, UPDATE, DELETE, INDEX, CREATE TEMPORARY TABLES, LOCK TABLES
+    ON JobDB.* TO ''sqldiracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `JobLoggingDB`;
+
+    GRANT SELECT, INSERT, UPDATE, DELETE, INDEX, CREATE TEMPORARY TABLES, LOCK TABLES
+    ON JobLoggingDB.* TO ''sqldiracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `PilotAgentsDB`;
+
+    GRANT SELECT, INSERT, UPDATE, DELETE, INDEX, CREATE TEMPORARY TABLES, LOCK TABLES
+    ON PilotAgentsDB.* TO ''sqldiracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `SandboxMetadataDB`;
+
+    GRANT SELECT, INSERT, UPDATE, DELETE, INDEX, CREATE TEMPORARY TABLES, LOCK TABLES
+    ON SandboxMetadataDB.* TO ''sqldiracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `TaskQueueDB`;
+
+    GRANT SELECT, INSERT, UPDATE, DELETE, INDEX, CREATE TEMPORARY TABLES, LOCK TABLES
+    ON TaskQueueDB.* TO ''sqldiracx''@''%'';
+
+    '
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: mysql-init-diracx-dbs
+  namespace: default

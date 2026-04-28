@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: diracx
+    app.kubernetes.io/version: v0.0.13
+    helm.sh/chart: diracx-1.0.23
+  name: diracx-cms
+  namespace: default

@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: minio
+    app.kubernetes.io/managed-by: Helm
+    chart: minio-5.0.11
+    heritage: Helm
+    release: diracx-cms
+  name: diracx-cms-minio
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: minio
+      release: diracx-cms
+  strategy:
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: minio
+        release: diracx-cms
+      name: diracx-cms-minio
+    spec:
+      containers:
+      - command:
+        - /bin/sh
+        - -ce
+        - /usr/bin/docker-entrypoint.sh minio server /export -S /etc/minio/certs/
+          --address :9000 --console-address :9001
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              key: rootUser
+              name: diracx-cms-minio
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: rootPassword
+              name: diracx-cms-minio
+        - name: MINIO_PROMETHEUS_AUTH_TYPE
+          value: public
+        - name: MINIO_BROWSER_REDIRECT_URL
+          value: http://vkarm:32001/
+        image: quay.io/minio/minio:RELEASE.2023-06-19T19-52-50Z
+        imagePullPolicy: IfNotPresent
+        name: minio
+        ports:
+        - containerPort: 9000
+          name: http
+          protocol: TCP
+        - containerPort: 9001
+          name: http-console
+          protocol: TCP
+        resources:
+          requests:
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp/credentials
+          name: minio-user
+          readOnly: true
+        - mountPath: /export
+          name: export
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: minio-sa
+      serviceAccountName: minio-sa
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: export
+      - name: minio-user
+        secret:
+          defaultMode: 420
+          secretName: diracx-cms-minio

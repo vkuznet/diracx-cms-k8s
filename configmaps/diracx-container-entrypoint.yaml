@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  entrypoint.sh: "#!/bin/bash\nset -euo pipefail\nIFS=$'\\n\\t'\n\nulimit -n 8192\n\
+    if [ -f \"/activate.sh\" ]; then\n  source /activate.sh\nelse\n  eval \"$(micromamba\
+    \ shell hook --shell=posix)\" && micromamba activate base\nfi\n\n\n\npip install\
+    \ -e/diracx_source/diracx/diracx-api -e/diracx_source/diracx/diracx-tasks -e/diracx_source/diracx/diracx-client\
+    \ -e/diracx_source/diracx/diracx-db -e/diracx_source/diracx/diracx-testing -e/diracx_source/diracx/diracx-logic\
+    \ -e/diracx_source/diracx/diracx-core -e/diracx_source/diracx/diracx-cli -e/diracx_source/diracx/diracx-routers\n\
+    \nexec \"$@\"\n"
+kind: ConfigMap
+metadata:
+  name: diracx-container-entrypoint
+  namespace: default

@@ -1,0 +1,210 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: diracx
+    app.kubernetes.io/version: v0.0.13
+    helm.sh/chart: diracx-1.0.23
+  name: diracx-cms
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: diracx-cms
+      app.kubernetes.io/name: diracx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: diracx-cms
+        app.kubernetes.io/name: diracx
+    spec:
+      containers:
+      - args:
+        - uvicorn
+        - --factory
+        - diracx.routers:create_app
+        - --host=0.0.0.0
+        - --port=8000
+        - --proxy-headers
+        - --forwarded-allow-ips=*
+        - --reload
+        - --reload-dir=/diracx_source
+        command:
+        - /usr/local/bin/_entrypoint.sh
+        - tini
+        - --
+        - bash
+        - /entrypoint.sh
+        envFrom:
+        - secretRef:
+            name: diracx-secrets
+        - secretRef:
+            name: diracx-dynamic-secrets
+        - secretRef:
+            name: diracx-sql-connection-urls
+        - secretRef:
+            name: diracx-os-connection-urls
+        image: ghcr.io/diracgrid/diracx/services:v0.0.13
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/health/live
+            port: http
+            scheme: HTTP
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 15
+        name: diracx
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/health/ready
+            port: http
+            scheme: HTTP
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 15
+        resources: {}
+        securityContext: {}
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /api/health/startup
+            port: http
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 5
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /cs_store
+          name: cs-store-mount
+        - mountPath: /keystore
+          name: jwks-mount
+        - mountPath: /entrypoint.sh
+          name: container-entrypoint
+          subPath: entrypoint.sh
+        - mountPath: /diracx_source
+          name: diracx-code-mount
+          readOnly: true
+        - mountPath: /diracx_source/diracx/diracx-api/src/diracx_api.egg-info
+          name: diracx-api-editable-install
+        - mountPath: /diracx_source/diracx/diracx-tasks/src/diracx_tasks.egg-info
+          name: diracx-tasks-editable-install
+        - mountPath: /diracx_source/diracx/diracx-client/src/diracx_client.egg-info
+          name: diracx-client-editable-install
+        - mountPath: /diracx_source/diracx/diracx-db/src/diracx_db.egg-info
+          name: diracx-db-editable-install
+        - mountPath: /diracx_source/diracx/diracx-testing/src/diracx_testing.egg-info
+          name: diracx-testing-editable-install
+        - mountPath: /diracx_source/diracx/diracx-logic/src/diracx_logic.egg-info
+          name: diracx-logic-editable-install
+        - mountPath: /diracx_source/diracx/diracx-core/src/diracx_core.egg-info
+          name: diracx-core-editable-install
+        - mountPath: /diracx_source/diracx/diracx-cli/src/diracx_cli.egg-info
+          name: diracx-cli-editable-install
+        - mountPath: /diracx_source/diracx/diracx-routers/src/diracx_routers.egg-info
+          name: diracx-routers-editable-install
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - until nc -vz diracx-cms-mysql 3306; do echo "Waiting for mysql..."; sleep
+          3; done;
+        image: docker.io/library/busybox:latest
+        imagePullPolicy: IfNotPresent
+        name: wait-for-mysql
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      - command:
+        - sh
+        - -c
+        - until nc -vz  opensearch-cluster-master 9200; do echo "Waiting for opensearch...";
+          sleep 3; done;
+        image: docker.io/library/busybox:latest
+        imagePullPolicy: IfNotPresent
+        name: wait-for-opensearch
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      - command:
+        - sh
+        - -c
+        - 'until echo -e "HEAD /minio/health/live HTTP/1.1\nHost: diracx-cms-minio\nConnection:
+          close\n" | nc diracx-cms-minio:9000 | grep "HTTP/1.1 200 OK"; do echo "Waiting
+          for minio..."; sleep 3; done;'
+        image: docker.io/library/busybox:latest
+        imagePullPolicy: IfNotPresent
+        name: wait-for-minio
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: diracx-cms
+      serviceAccountName: diracx-cms
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: cs-store-mount
+        persistentVolumeClaim:
+          claimName: pvc-cs-store
+      - name: diracx-code-mount
+        persistentVolumeClaim:
+          claimName: pvc-diracx-code
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-api-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-tasks-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-client-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-db-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-testing-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-logic-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-core-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-cli-editable-install
+      - emptyDir:
+          sizeLimit: 5Mi
+        name: diracx-routers-editable-install
+      - configMap:
+          defaultMode: 420
+          name: diracx-container-entrypoint
+        name: container-entrypoint
+      - name: jwks-mount
+        secret:
+          defaultMode: 420
+          items:
+          - key: jwks.json
+            path: jwks.json
+          secretName: diracx-jwks

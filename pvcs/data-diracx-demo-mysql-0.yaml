@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app.kubernetes.io/component: primary
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/name: mysql
+  name: data-diracx-cms-mysql-0
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: standard
+  volumeMode: Filesystem
+  volumeName: pvc-97aa93a0-9fec-4e74-8dba-35c4fcb17c85

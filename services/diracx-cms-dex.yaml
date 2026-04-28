@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: dex
+    app.kubernetes.io/version: 2.36.0
+    helm.sh/chart: dex-0.14.2
+  name: diracx-cms-dex
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - appProtocol: http
+    name: http
+    nodePort: 32002
+    port: 8000
+    protocol: TCP
+    targetPort: http
+  - appProtocol: http
+    name: telemetry
+    nodePort: 30308
+    port: 5558
+    protocol: TCP
+    targetPort: telemetry
+  selector:
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/name: dex
+  sessionAffinity: None
+  type: NodePort

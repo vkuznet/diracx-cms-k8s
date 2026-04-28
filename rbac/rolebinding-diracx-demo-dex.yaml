@@ -1,0 +1,19 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: dex
+    app.kubernetes.io/version: 2.36.0
+    helm.sh/chart: dex-0.14.2
+  name: diracx-cms-dex
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: diracx-cms-dex
+subjects:
+- kind: ServiceAccount
+  name: diracx-cms-dex
+  namespace: default

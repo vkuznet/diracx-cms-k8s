@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/name: opensearch
+  name: opensearch-cluster-master-opensearch-cluster-master-0
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: standard
+  volumeMode: Filesystem
+  volumeName: pvc-06e1540c-0672-4738-b11e-b8ceee76774b
