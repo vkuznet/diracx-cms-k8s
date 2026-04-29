@@ -130,7 +130,11 @@ kubectl apply -f configmaps/
 
 > **Security note**: The secrets in this directory were exported from a demo cluster and
 > contain real (but demo-only) credentials such as MySQL passwords, MinIO root credentials,
-> and TLS private keys.  Before applying to a production cluster you should:
+> and TLS private keys.  
+> **Manifest files**: in secrets manifest files we use base64 encoded strings
+> for all values, therefore to see actual values you need to decode them using
+> this command: `echo ... | base64 -d`
+> Before applying to a production cluster you should:
 > 1. Regenerate all passwords/keys
 > 2. Consider using a secrets manager (Vault, AWS Secrets Manager, Sealed Secrets, etc.)
 > 3. Remove the secrets directory from your git repository or use git-crypt / SOPS
