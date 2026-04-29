@@ -60,7 +60,7 @@ spec:
             - sh
             - -c
             - |
-              until nc -vz diracx-cms-mysql 3306; do
+              until nc -z diracx-cms-mysql 3306; do
                 echo "Waiting for MySQL..."; sleep 3
               done
 

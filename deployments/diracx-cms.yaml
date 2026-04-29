@@ -37,8 +37,6 @@ spec:
         - --port=8000
         - --proxy-headers
         - --forwarded-allow-ips=*
-        - --reload
-        - --reload-dir=/diracx_source
         command:
         - /usr/local/bin/_entrypoint.sh
         - tini
@@ -100,33 +98,12 @@ spec:
         - mountPath: /entrypoint.sh
           name: container-entrypoint
           subPath: entrypoint.sh
-        - mountPath: /diracx_source
-          name: diracx-code-mount
-          readOnly: true
-        - mountPath: /diracx_source/diracx/diracx-api/src/diracx_api.egg-info
-          name: diracx-api-editable-install
-        - mountPath: /diracx_source/diracx/diracx-tasks/src/diracx_tasks.egg-info
-          name: diracx-tasks-editable-install
-        - mountPath: /diracx_source/diracx/diracx-client/src/diracx_client.egg-info
-          name: diracx-client-editable-install
-        - mountPath: /diracx_source/diracx/diracx-db/src/diracx_db.egg-info
-          name: diracx-db-editable-install
-        - mountPath: /diracx_source/diracx/diracx-testing/src/diracx_testing.egg-info
-          name: diracx-testing-editable-install
-        - mountPath: /diracx_source/diracx/diracx-logic/src/diracx_logic.egg-info
-          name: diracx-logic-editable-install
-        - mountPath: /diracx_source/diracx/diracx-core/src/diracx_core.egg-info
-          name: diracx-core-editable-install
-        - mountPath: /diracx_source/diracx/diracx-cli/src/diracx_cli.egg-info
-          name: diracx-cli-editable-install
-        - mountPath: /diracx_source/diracx/diracx-routers/src/diracx_routers.egg-info
-          name: diracx-routers-editable-install
       dnsPolicy: ClusterFirst
       initContainers:
       - command:
         - sh
         - -c
-        - until nc -vz diracx-cms-mysql 3306; do echo "Waiting for mysql..."; sleep
+        - until nc -z diracx-cms-mysql 3306; do echo "Waiting for mysql..."; sleep
           3; done;
         image: docker.io/library/busybox:latest
         imagePullPolicy: IfNotPresent
@@ -134,10 +111,11 @@ spec:
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
+        volumeMounts: []
       - command:
         - sh
         - -c
-        - until nc -vz  opensearch-cluster-master 9200; do echo "Waiting for opensearch...";
+        - until nc -z  opensearch-cluster-master 9200; do echo "Waiting for opensearch...";
           sleep 3; done;
         image: docker.io/library/busybox:latest
         imagePullPolicy: IfNotPresent
@@ -145,6 +123,7 @@ spec:
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
+        volumeMounts: []
       - command:
         - sh
         - -c
@@ -157,6 +136,7 @@ spec:
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
+        volumeMounts: []
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
@@ -167,36 +147,6 @@ spec:
       - name: cs-store-mount
         persistentVolumeClaim:
           claimName: pvc-cs-store
-      - name: diracx-code-mount
-        persistentVolumeClaim:
-          claimName: pvc-diracx-code
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-api-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-tasks-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-client-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-db-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-testing-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-logic-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-core-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-cli-editable-install
-      - emptyDir:
-          sizeLimit: 5Mi
-        name: diracx-routers-editable-install
       - configMap:
           defaultMode: 420
           name: diracx-container-entrypoint
