@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: diracx-cms-code-loader
+  namespace: default
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+
+      containers:
+      - name: git-clone
+        image: alpine/git
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+
+            echo "Cloning repo..."
+            # TODO: later we should use github.com/dmwm/diracx URL
+            git clone https://github.com/vkuznet/diracx.git /data/diracx
+
+            echo "Done. Listing contents:"
+            ls -R /data/diracx | head -50
+
+        volumeMounts:
+        - name: diracx-storage
+          mountPath: /data
+
+      volumes:
+      - name: diracx-storage
+        persistentVolumeClaim:
+          claimName: pvc-diracx-code
