@@ -6,13 +6,13 @@ data:
     \ -f ${issuer_file:=issuer.yml}; do\n  sleep 1;\ndone ;\nset -e ; # reset `e`\
     \ as active\n"
   issuer.yml: "\n---\napiVersion: cert-manager.io/v1\nkind: Issuer\nmetadata:\n  name:\
-    \ selfsigned-issuer\nspec:\n  selfSigned: {}\n---\napiVersion: cert-manager.io/v1\n\
-    kind: Certificate\nmetadata:\n  name: diracx-selfsigned-ca\nspec:\n  isCA: true\n\
-    \  commonName: diracx-selfsigned-ca\n  secretName: root-secret\n  privateKey:\n\
-    \    algorithm: ECDSA\n    size: 256\n  issuerRef:\n    name: selfsigned-issuer\n\
-    \    kind: Issuer\n    group: cert-manager.io\n---\napiVersion: cert-manager.io/v1\n\
-    kind: Issuer\nmetadata:\n  name: diracx-ca-issuer\nspec:\n  ca:\n    secretName:\
-    \ root-secret\n"
+    \ selfsigned-issuer\n  namespace: default\nspec:\n  selfSigned: {}\n---\napiVersion:\
+    \ cert-manager.io/v1\nkind: Certificate\nmetadata:\n  name: diracx-selfsigned-ca\n\
+    \  namespace: default\nspec:\n  isCA: true\n  commonName: diracx-selfsigned-ca\n\
+    \  secretName: root-secret\n  privateKey:\n    algorithm: ECDSA\n    size: 256\n\
+    \  issuerRef:\n    name: selfsigned-issuer\n    kind: Issuer\n    group: cert-manager.io\n\
+    ---\napiVersion: cert-manager.io/v1\nkind: Issuer\nmetadata:\n  name: diracx-ca-issuer\n\
+    \  namespace: default\nspec:\n  ca:\n    secretName: root-secret\n"
 kind: ConfigMap
 metadata:
   labels:

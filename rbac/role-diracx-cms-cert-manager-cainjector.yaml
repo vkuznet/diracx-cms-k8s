@@ -1,47 +1,35 @@
 ---
+# ClusterRole: all permissions cainjector needs across the whole cluster
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: diracx-cert-manager-cainjector-cluster
 rules:
-  # 1. NEW: Allow managing APIServices for injection
+  # Inject CA bundles into APIServices
   - apiGroups: ["apiregistration.k8s.io"]
     resources: ["apiservices"]
     verbs: ["get", "list", "watch", "update", "patch"]
-
-  # 2. Existing: CRD and Webhook management
+  # Watch CRDs and webhook configs for CA injection targets
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["admissionregistration.k8s.io"]
     resources: ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"]
     verbs: ["get", "list", "watch", "update", "patch"]
-
-  # 3. Existing: Watching sources of CA data
+  # Read secrets (CA certs) and emit events
   - apiGroups: [""]
     resources: ["secrets", "events"]
     verbs: ["get", "list", "watch"]
+  # Watch Certificate resources as CA sources
   - apiGroups: ["cert-manager.io"]
     resources: ["certificates"]
     verbs: ["get", "list", "watch"]
----
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: cert-manager-leader-election
-  namespace: kube-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: cert-manager-leader-election
-subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager-cainjector
-    namespace: default
+  # Leader election: cainjector locks on leases in kube-system
+  # FIX: this was missing — caused "forbidden: cannot get leases in kube-system"
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -53,5 +41,33 @@ roleRef:
   name: diracx-cert-manager-cainjector-cluster
 subjects:
   - kind: ServiceAccount
-    name: diracx-cms-cert-manager-cainjector # Matches the user in your error log
+    name: diracx-cms-cert-manager-cainjector
+    namespace: default
+
+---
+# Role in kube-system for leader election lock
+# cert-manager always uses kube-system for this, regardless of its own namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cert-manager-cainjector-leader-election
+  namespace: kube-system
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cert-manager-cainjector-leader-election
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cert-manager-cainjector-leader-election
+subjects:
+  - kind: ServiceAccount
+    name: diracx-cms-cert-manager-cainjector
     namespace: default
