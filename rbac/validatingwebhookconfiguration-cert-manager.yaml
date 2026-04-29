@@ -1,0 +1,69 @@
+---
+# ValidatingWebhookConfiguration for cert-manager v1.13.1
+# This is cluster-scoped and was NOT captured in the original namespace export.
+# The API server calls this webhook to validate cert-manager resources before
+# persisting them. Without it (or with a stale caBundle), the controller gets
+# "not found" errors when trying to reconcile Certificates and Issuers.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  labels:
+    app: webhook
+    app.kubernetes.io/component: webhook
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/name: webhook
+    app.kubernetes.io/version: v1.13.1
+  name: diracx-cms-cert-manager-webhook
+  annotations:
+    # cert-manager will keep this caBundle up to date automatically once running
+    cert-manager.io/inject-ca-from-secret: default/diracx-cms-cert-manager-webhook-ca
+webhooks:
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: diracx-cms-cert-manager-webhook
+        namespace: default
+        path: /validate
+        port: 443
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJ3akNDQVVpZ0F3SUJBZ0lSQU1yeW9oU1laTlFMdGl4S0toSTB2RzR3Q2dZSUtvWkl6ajBFQXdNd0lqRWcKTUI0R0ExVUVBeE1YWTJWeWRDMXRZVzVoWjJWeUxYZGxZbWh2YjJzdFkyRXdIaGNOTWpZd05ESTRNVE0wT0RBegpXaGNOTWpjd05ESTRNVE0wT0RBeldqQWlNU0F3SGdZRFZRUURFeGRqWlhKMExXMWhibUZuWlhJdGQyVmlhRzl2CmF5MWpZVEIyTUJBR0J5cUdTTTQ5QWdFR0JTdUJCQUFpQTJJQUJLM3Irandsc1h1TzRQYmxSNnJhcTRKUmpvU0EKVjNpbHN2OVBRMDhVQk1Bd2ZSUEZqc1VOUGR3TTZ1ZnNHRGtlMGlFbTZKOEtRendLZnk4WFFuWFJJb2IrZnhFWApGSEoxeW0zRmxaeTdUTEtZQmwwb3AvNEhCSWVRWnJOZm9yVE5mNk5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trCk1BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZDN2hwc2c0Y1kvcDAycmwvaDk5OVF6eU1qclMKTUFvR0NDcUdTTTQ5QkFNREEyZ0FNR1VDTVFEMFFvbnBFNGExTytkZkpzYjk3YjlsN3BhaTNkMFdoa3lQN0pRWApLY1RCdmtmM2lzRjFXOXdJeHBwb1JqQlcveE1DTURPeEpUdWVuUFYxSHl0elhtczg1bEVZWjlsM2oxKzcrV1ErCjQzVGRBL1lIMDJsUXhvbkhvSWl0NWJmZkIyaVl1UT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    name: webhook.cert-manager.io
+    namespaceSelector:
+      matchExpressions:
+        - key: "cert-manager.io/disable-validation"
+          operator: NotIn
+          values: ["true"]
+        - key: "kubernetes.io/metadata.name"
+          operator: NotIn
+          values: ["kube-system"]
+    rules:
+      - apiGroups:   ["cert-manager.io", "acme.cert-manager.io"]
+        apiVersions: ["v1"]
+        operations:  ["CREATE", "UPDATE"]
+        resources:   ["*/*"]
+    sideEffects: None
+    timeoutSeconds: 30
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: diracx-cms-cert-manager-webhook
+        namespace: default
+        path: /validate
+        port: 443
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJ3akNDQVVpZ0F3SUJBZ0lSQU1yeW9oU1laTlFMdGl4S0toSTB2RzR3Q2dZSUtvWkl6ajBFQXdNd0lqRWcKTUI0R0ExVUVBeE1YWTJWeWRDMXRZVzVoWjJWeUxYZGxZbWh2YjJzdFkyRXdIaGNOTWpZd05ESTRNVE0wT0RBegpXaGNOTWpjd05ESTRNVE0wT0RBeldqQWlNU0F3SGdZRFZRUURFeGRqWlhKMExXMWhibUZuWlhJdGQyVmlhRzl2CmF5MWpZVEIyTUJBR0J5cUdTTTQ5QWdFR0JTdUJCQUFpQTJJQUJLM3Irandsc1h1TzRQYmxSNnJhcTRKUmpvU0EKVjNpbHN2OVBRMDhVQk1Bd2ZSUEZqc1VOUGR3TTZ1ZnNHRGtlMGlFbTZKOEtRendLZnk4WFFuWFJJb2IrZnhFWApGSEoxeW0zRmxaeTdUTEtZQmwwb3AvNEhCSWVRWnJOZm9yVE5mNk5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trCk1BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZDN2hwc2c0Y1kvcDAycmwvaDk5OVF6eU1qclMKTUFvR0NDcUdTTTQ5QkFNREEyZ0FNR1VDTVFEMFFvbnBFNGExTytkZkpzYjk3YjlsN3BhaTNkMFdoa3lQN0pRWApLY1RCdmtmM2lzRjFXOXdJeHBwb1JqQlcveE1DTURPeEpUdWVuUFYxSHl0elhtczg1bEVZWjlsM2oxKzcrV1ErCjQzVGRBL1lIMDJsUXhvbkhvSWl0NWJmZkIyaVl1UT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    name: validate.gateway.networking.k8s.io
+    namespaceSelector: {}
+    objectSelector:
+      matchExpressions:
+        - key: "gateway.networking.k8s.io/policy"
+          operator: Exists
+    rules:
+      - apiGroups:   ["gateway.networking.k8s.io"]
+        apiVersions: ["v1alpha2"]
+        operations:  ["CREATE", "UPDATE"]
+        resources:   ["*"]
+    sideEffects: None
+    timeoutSeconds: 30
