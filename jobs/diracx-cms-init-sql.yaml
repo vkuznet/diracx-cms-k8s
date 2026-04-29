@@ -12,17 +12,8 @@ spec:
   manualSelector: false
   parallelism: 1
   podReplacementPolicy: TerminatingOrFailed
-  selector:
-    matchLabels:
-      batch.kubernetes.io/controller-uid: 7a932265-5520-46c1-8ce6-e6e833f4d694
   suspend: false
   template:
-    metadata:
-      labels:
-        batch.kubernetes.io/controller-uid: 7a932265-5520-46c1-8ce6-e6e833f4d694
-        batch.kubernetes.io/job-name: diracx-cms-init-sql-1-lxc
-        controller-uid: 7a932265-5520-46c1-8ce6-e6e833f4d694
-        job-name: diracx-cms-init-sql-1-lxc
     spec:
       containers:
       - args:
