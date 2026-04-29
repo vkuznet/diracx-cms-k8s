@@ -1,3 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: diracx-cms-mysql
+  namespace: default
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/component: primary
+spec:
+  type: ClusterIP
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+      protocol: TCP
+  selector:
+    # These MUST match the labels on your 'diracx-cms-mysql-0' pod
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/component: primary
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
