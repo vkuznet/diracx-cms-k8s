@@ -1,3 +1,23 @@
+---
+# ConfigMap: contains the actual shell script to run the OpenSearch init
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: diracx-cms-init-os
+  namespace: default
+  labels:
+    app.kubernetes.io/name: diracx
+    app.kubernetes.io/component: init-os
+data:
+  init-os: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    IFS=$'\n\t'
+
+    python -m diracx.db init-os
+
+---
+# Job: runs the OpenSearch initialization
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -6,71 +26,59 @@ metadata:
 spec:
   activeDeadlineSeconds: 900
   backoffLimit: 6
-  completionMode: NonIndexed
   completions: 1
-  manualSelector: false
   parallelism: 1
-  podReplacementPolicy: TerminatingOrFailed
-  suspend: false
-  template:
-    metadata:
-      labels: {}
-    spec:
-      containers:
-      - args:
-        - /bin/bash
-        - /scripts/init-os
-        command:
-        - /bin/bash
-        - /entrypoint.sh
-        env:
-        - name: DIRACX_OS_DB_JOBPARAMETERSDB
-          valueFrom:
-            secretKeyRef:
-              key: DIRACX_OS_DB_JOBPARAMETERSDB
-              name: diracx-os-root-connection-urls
-        - name: DIRACX_OS_DB_PILOTLOGSDB
-          valueFrom:
-            secretKeyRef:
-              key: DIRACX_OS_DB_PILOTLOGSDB
-              name: diracx-os-root-connection-urls
-        image: ghcr.io/diracgrid/diracx/services:v0.0.13
-        imagePullPolicy: Always
-        name: diracx
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /entrypoint.sh
-          name: container-entrypoint
-          subPath: entrypoint.sh
-        - mountPath: /scripts
-          name: scripts
-      dnsPolicy: ClusterFirst
-      initContainers:
-      - command:
-        - sh
-        - -c
-        - until nc -z  opensearch-cluster-master 9200; do echo "Waiting for opensearch...";
-          sleep 3; done;
-        image: docker.io/library/busybox:latest
-        imagePullPolicy: IfNotPresent
-        name: wait-for-opensearch
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts: []
-      restartPolicy: Never
-      schedulerName: default-scheduler
-      securityContext: {}
-      terminationGracePeriodSeconds: 30
-      volumes:
-      - configMap:
-          defaultMode: 420
-          name: diracx-cms-init-os
-        name: scripts
-      - configMap:
-          defaultMode: 420
-          name: diracx-container-entrypoint
-        name: container-entrypoint
   ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      
+      # Step 1: Wait for OpenSearch to be reachable via DNS
+      initContainers:
+        - name: wait-for-opensearch
+          image: docker.io/library/busybox:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z opensearch-cluster-master 9200; do 
+                echo "Waiting for opensearch..."; 
+                sleep 3; 
+              done;
+
+      # Step 2: Execute the initialization script
+      containers:
+        - name: diracx
+          image: ghcr.io/diracgrid/diracx/services:v0.0.13
+          imagePullPolicy: Always
+          command: ["/bin/bash", "/entrypoint.sh"]
+          args: ["/bin/bash", "/scripts/init-os"]
+          env:
+            - name: DIRACX_OS_DB_JOBPARAMETERSDB
+              valueFrom:
+                secretKeyRef:
+                  name: diracx-os-root-connection-urls
+                  key: DIRACX_OS_DB_JOBPARAMETERSDB
+            - name: DIRACX_OS_DB_PILOTLOGSDB
+              valueFrom:
+                secretKeyRef:
+                  name: diracx-os-root-connection-urls
+                  key: DIRACX_OS_DB_PILOTLOGSDB
+          volumeMounts:
+            - name: container-entrypoint
+              mountPath: /entrypoint.sh
+              subPath: entrypoint.sh
+            - name: scripts
+              mountPath: /scripts
+          resources: {}
+
+      volumes:
+        - name: scripts
+          configMap:
+            name: diracx-cms-init-os  # This name now matches the ConfigMap above
+            defaultMode: 0755
+        - name: container-entrypoint
+          configMap:
+            name: diracx-container-entrypoint
+            defaultMode: 0755
