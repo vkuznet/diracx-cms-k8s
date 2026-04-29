@@ -213,6 +213,11 @@ kubectl exec -it mysql-debug-shell -- sh
 # and execute any commands, e.g. probe mysql
 $ nc -vz diracx-cms-mysql 3306
 
+# 0. Clone diracx codebase to PVC
+# it will run a job with git clone command and copy cloned
+# diracx codebase to existing PVC
+kubectl apply -f jobs/diracx-cms-code-loader.yaml
+
 # 1. Issue TLS certificates
 kubectl apply -f jobs/diracx-cms-issuer-1.yaml
 kubectl wait --for=condition=complete job/diracx-cms-issuer-1 --timeout=120s
