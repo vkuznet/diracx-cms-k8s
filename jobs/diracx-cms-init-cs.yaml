@@ -12,16 +12,18 @@ data:
     # 1. Activate the environment
     source /activate.sh
 
-    # 2. Initialize the Configuration Service
-    # Based on your 'dirac --help' output, we use the config command.
-    # We point it to the mounted PVC path.
+    # 2. Add diracx code from PVC to PYTHONPATH
+    export PYTHONPATH=${PYTHONPATH:-}:/src/diracx-logic/src:/src/diracx-core/src
+
+    # Optional debug (very useful)
+    echo "PYTHONPATH=$PYTHONPATH"
+    ls -l /src || true
+
+    # 3. Initialize the Configuration Service
     echo "Initializing Configuration Service in /cs_store..."
-    
-    # Typically, DiracX expects a local git-based CS or a specific structure.
-    # If this command differs in your docs, swap it here:
-    # dirac config init --path /cs_store
+
     dirac internal generate-cs /cs_store/initialRepo
-    
+
     echo "CS initialization complete."
 
 ---
@@ -43,23 +45,36 @@ spec:
           imagePullPolicy: Always
           command: ["/bin/bash", "/entrypoint.sh"]
           args: ["/bin/bash", "/scripts/init-cs"]
+
           volumeMounts:
             - name: cs-store-mount
               mountPath: /cs_store
+
             - name: container-entrypoint
               mountPath: /entrypoint.sh
               subPath: entrypoint.sh
+
             - name: scripts
               mountPath: /scripts
+
+            - name: diracx-src
+              mountPath: /src
+
       volumes:
         - name: scripts
           configMap:
             name: diracx-cms-init-cs
-            defaultMode: 0755 # Changed to 755 to ensure it is executable
+            defaultMode: 0755
+
         - name: cs-store-mount
           persistentVolumeClaim:
             claimName: pvc-cs-store
+
         - name: container-entrypoint
           configMap:
             name: diracx-container-entrypoint
             defaultMode: 0755
+
+        - name: diracx-src
+          persistentVolumeClaim:
+            claimName: pvc-diracx-code
