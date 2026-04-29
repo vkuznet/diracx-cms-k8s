@@ -13,7 +13,7 @@ data:
     source /activate.sh
 
     # 2. Add diracx code from PVC to PYTHONPATH
-    export PYTHONPATH=${PYTHONPATH:-}:/src/diracx-logic/src:/src/diracx-core/src
+    export PYTHONPATH=${PYTHONPATH:+$PYTHONPATH:}:/src/diracx-logic/src:/src/diracx-core/src
 
     # Optional debug (very useful)
     echo "PYTHONPATH=$PYTHONPATH"
@@ -22,7 +22,14 @@ data:
     # 3. Initialize the Configuration Service
     echo "Initializing Configuration Service in /cs_store..."
 
-    dirac internal generate-cs /cs_store/initialRepo
+    CS_DIR=/cs_store/initialRepo
+
+    if [[ -d "$CS_DIR" ]]; then
+      echo "Configuration Service already exists at $CS_DIR, skipping."
+    else
+      echo "Creating Configuration Service at $CS_DIR..."
+      dirac internal generate-cs "$CS_DIR"
+    fi
 
     echo "CS initialization complete."
 
