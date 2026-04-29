@@ -4,3 +4,4 @@ metadata:
   name: default
   labels:
     name: default
+    cert-manager.io/disable-validation: 'true'
