@@ -202,6 +202,13 @@ store. They must run in order because each one depends on the previous one compl
 successfully.
 
 ```bash
+# if any of the jobs/pods will require debugging you can use
+kubectl apply -f debug/busybox-shell.yaml
+# and after that log into its container, e.g.
+kubectl exec -it mysql-debug-shell -- sh
+# and execute any commands, e.g. probe mysql
+$ nc -vz diracx-cms-mysql 3306
+
 # 1. Issue TLS certificates
 kubectl apply -f jobs/diracx-cms-issuer-1.yaml
 kubectl wait --for=condition=complete job/diracx-cms-issuer-1 --timeout=120s

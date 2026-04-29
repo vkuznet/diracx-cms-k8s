@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-debug-shell
+  namespace: default
+spec:
+  restartPolicy: Never
+  containers:
+    - name: tester
+      image: docker.io/library/busybox:latest
+      command: ["/bin/sh", "-c"]
+      # This "sleep infinity" keeps the container running so you can exec in
+      args: ["sleep infinity"]
