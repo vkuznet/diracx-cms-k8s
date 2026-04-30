@@ -1,0 +1,10 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: diracx-selfsigned-ca
+spec:
+  isCA: true
+  commonName: diracx-selfsigned-ca
+  secretName: root-secret
+  issuerRef:
+    name: diracx-ca-issuer
