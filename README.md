@@ -273,6 +273,14 @@ kubectl get issuer,certificate
 
 ```
 
+Also we need to create several service accounts:
+```bash
+kubectl create serviceaccount diracx-cms-dex -n default
+kubectl create serviceaccount diracx-cms-mysql -n default
+kubectl create serviceaccount diracx-cms -n default
+kubectl create serviceaccount minio-sa -n default
+```
+
 ### Step 10 – Deploy Dex (OIDC Provider)
 
 ```bash
