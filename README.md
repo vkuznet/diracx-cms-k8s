@@ -293,7 +293,15 @@ kubectl apply -f deployments/diracx-cms-minio.yaml
 kubectl rollout status deployment/diracx-cms-minio -n default --timeout=120s
 ```
 
-### Step 12 – Deploy DiracX API + Web + CLI
+### Step 12 – Apply Services
+
+```bash
+kubectl apply -f services/
+```
+
+### Step 13 – Deploy DiracX API + Web + CLI
+we need to have services in place before deployment as some deployments
+probe services, e.g. diracx-cms probe minio service
 
 ```bash
 kubectl apply -f deployments/diracx-cms.yaml
@@ -303,12 +311,6 @@ kubectl apply -f deployments/diracx-cms-cli.yaml
 kubectl rollout status deployment/diracx-cms -n default --timeout=300s
 kubectl rollout status deployment/diracx-cms-web -n default --timeout=120s
 kubectl rollout status deployment/diracx-cms-cli -n default --timeout=120s
-```
-
-### Step 13 – Apply Services
-
-```bash
-kubectl apply -f services/
 ```
 
 ### Step 14 – Apply Ingress
