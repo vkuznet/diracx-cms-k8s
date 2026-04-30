@@ -80,3 +80,39 @@ spec:
       serviceAccount: diracx-cms-cert-manager
       serviceAccountName: diracx-cms-cert-manager
       terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: diracx-cms
+    meta.helm.sh/release-namespace: default
+  labels:
+    app: cert-manager
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/version: v1.13.1
+    helm.sh/chart: cert-manager-v1.13.1
+  name: diracx-cms-cert-manager
+  namespace: default
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: tcp-prometheus-servicemonitor
+    port: 9402
+    protocol: TCP
+    targetPort: 9402
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/name: cert-manager
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+
