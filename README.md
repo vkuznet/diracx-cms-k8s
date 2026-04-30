@@ -118,6 +118,9 @@ ServiceAccounts, Roles, and RoleBindings must be present before the workloads th
 
 ```bash
 kubectl apply -f rbac/
+
+# we need new service account
+kubectl apply -f new-rbac/
 ```
 
 ### Step 4 – Apply ConfigMaps
@@ -247,16 +250,27 @@ kubectl wait --for=condition=complete job/diracx-cms-init-cs --timeout=120s
 > **Re-running init jobs**: If you need to re-run a job (e.g., after fixing a config error),
 > delete it first: `kubectl delete job <name>` then re-apply.
 
-### Step 9 – Deploy cert-manager components
+### Step 9. - Install cert-manager via helm
+```
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --set installCRDs=true
 
-```bash
-kubectl apply -f deployments/diracx-cms-cert-manager.yaml
-kubectl apply -f deployments/diracx-cms-cert-manager-cainjector.yaml
-kubectl apply -f deployments/diracx-cms-cert-manager-webhook.yaml
+kubectl apply -f certs/issuer.yaml
+kubectl apply -f certs/ca-cert.yaml
+kubectl get secret root-secret
+kubectl describe secret root-secret
+kubectl apply -f certs/ca-issuer.yaml
+kubectl apply -f certs/tls-cert.yaml
+kubectl get certificate
+kubectl describe certificate diracx-tls
+kubectl get secret diracx-tls-secret
+kubectl get certificaterequests
+kubectl get issuer,certificate
 
-kubectl rollout status deployment/diracx-cms-cert-manager -n default --timeout=120s
-kubectl rollout status deployment/diracx-cms-cert-manager-cainjector -n default --timeout=120s
-kubectl rollout status deployment/diracx-cms-cert-manager-webhook -n default --timeout=120s
 ```
 
 ### Step 10 – Deploy Dex (OIDC Provider)
