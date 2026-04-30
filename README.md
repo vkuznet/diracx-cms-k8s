@@ -106,11 +106,20 @@ kubectl wait --for=condition=Established crd \
   --timeout=60s
 ```
 
-### Step 2 – Create Namespace
+### Step 2 – Create Namespace and service accounts
 
 ```bash
 kubectl apply -f namespaces/
 ```
+
+Also we need to create several service accounts:
+```bash
+kubectl create serviceaccount diracx-cms-dex -n default
+kubectl create serviceaccount diracx-cms-mysql -n default
+kubectl create serviceaccount diracx-cms -n default
+kubectl create serviceaccount minio-sa -n default
+```
+
 
 ### Step 3 – Apply RBAC
 
@@ -118,9 +127,6 @@ ServiceAccounts, Roles, and RoleBindings must be present before the workloads th
 
 ```bash
 kubectl apply -f rbac/
-
-# we need new service account
-kubectl apply -f new-rbac/
 ```
 
 ### Step 4 – Apply ConfigMaps
@@ -271,14 +277,6 @@ kubectl get secret diracx-tls-secret
 kubectl get certificaterequests
 kubectl get issuer,certificate
 
-```
-
-Also we need to create several service accounts:
-```bash
-kubectl create serviceaccount diracx-cms-dex -n default
-kubectl create serviceaccount diracx-cms-mysql -n default
-kubectl create serviceaccount diracx-cms -n default
-kubectl create serviceaccount minio-sa -n default
 ```
 
 ### Step 10 – Deploy Dex (OIDC Provider)
