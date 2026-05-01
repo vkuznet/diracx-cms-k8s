@@ -4,7 +4,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: cluster-admin
@@ -16,236 +16,6 @@ items:
   - apiGroup: rbac.authorization.k8s.io
     kind: Group
     name: system:masters
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cainjector
-      app.kubernetes.io/component: cainjector
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cainjector
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-cainjector
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-cainjector
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager-cainjector
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: cert-manager
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-approve:cert-manager-io
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-approve:cert-manager-io
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-certificates
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-certificates
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: cert-manager
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-certificatesigningrequests
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-certificatesigningrequests
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-challenges
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-challenges
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-clusterissuers
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-clusterissuers
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-ingress-shim
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-ingress-shim
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-issuers
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-issuers
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-controller-orders
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-controller-orders
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: webhook
-      app.kubernetes.io/component: webhook
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: webhook
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-webhook:subjectaccessreviews
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: diracx-cms-cert-manager-webhook:subjectaccessreviews
-  subjects:
-  - kind: ServiceAccount
-    name: diracx-cms-cert-manager-webhook
-    namespace: default
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRoleBinding
   metadata:
@@ -271,8 +41,9 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      kubectl.kubernetes.io/last-applied-configuration: |
-        {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"labels":{"app.kubernetes.io/instance":"ingress-nginx","app.kubernetes.io/name":"ingress-nginx","app.kubernetes.io/part-of":"ingress-nginx","app.kubernetes.io/version":"1.15.1"},"name":"ingress-nginx"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"ingress-nginx"},"subjects":[{"kind":"ServiceAccount","name":"ingress-nginx","namespace":"ingress-nginx"}]}
+      kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"labels":{"app.kubernetes.io/instance":"ingress-nginx","app.kubernetes.io/name":"ingress-nginx","app.kubernetes.io/part-of":"ingress-nginx","app.kubernetes.io/version":"1.15.1"},"name":"ingress-nginx"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"ingress-nginx"},"subjects":[{"kind":"ServiceAccount","name":"ingress-nginx","namespace":"ingress-nginx"}]}
+
+        '
     labels:
       app.kubernetes.io/instance: ingress-nginx
       app.kubernetes.io/name: ingress-nginx
@@ -291,8 +62,9 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      kubectl.kubernetes.io/last-applied-configuration: |
-        {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"labels":{"app.kubernetes.io/component":"admission-webhook","app.kubernetes.io/instance":"ingress-nginx","app.kubernetes.io/name":"ingress-nginx","app.kubernetes.io/part-of":"ingress-nginx","app.kubernetes.io/version":"1.15.1"},"name":"ingress-nginx-admission"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"ingress-nginx-admission"},"subjects":[{"kind":"ServiceAccount","name":"ingress-nginx-admission","namespace":"ingress-nginx"}]}
+      kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"labels":{"app.kubernetes.io/component":"admission-webhook","app.kubernetes.io/instance":"ingress-nginx","app.kubernetes.io/name":"ingress-nginx","app.kubernetes.io/part-of":"ingress-nginx","app.kubernetes.io/version":"1.15.1"},"name":"ingress-nginx-admission"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"ingress-nginx-admission"},"subjects":[{"kind":"ServiceAccount","name":"ingress-nginx-admission","namespace":"ingress-nginx"}]}
+
+        '
     labels:
       app.kubernetes.io/component: admission-webhook
       app.kubernetes.io/instance: ingress-nginx
@@ -396,8 +168,9 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      kubectl.kubernetes.io/last-applied-configuration: |
-        {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"name":"local-path-provisioner-bind"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"local-path-provisioner-role"},"subjects":[{"kind":"ServiceAccount","name":"local-path-provisioner-service-account","namespace":"local-path-storage"}]}
+      kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"name":"local-path-provisioner-bind"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"local-path-provisioner-role"},"subjects":[{"kind":"ServiceAccount","name":"local-path-provisioner-service-account","namespace":"local-path-storage"}]}
+
+        '
     name: local-path-provisioner-bind
   roleRef:
     apiGroup: rbac.authorization.k8s.io
@@ -411,7 +184,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:basic-user
@@ -427,7 +200,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:attachdetach-controller
@@ -443,7 +216,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:certificate-controller
@@ -459,7 +232,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:clusterrole-aggregation-controller
@@ -475,7 +248,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:cronjob-controller
@@ -491,7 +264,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:daemon-set-controller
@@ -507,7 +280,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:deployment-controller
@@ -523,7 +296,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:disruption-controller
@@ -539,7 +312,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:endpoint-controller
@@ -555,7 +328,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:endpointslice-controller
@@ -571,7 +344,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:endpointslicemirroring-controller
@@ -587,7 +360,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:ephemeral-volume-controller
@@ -603,7 +376,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:expand-controller
@@ -619,7 +392,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:generic-garbage-collector
@@ -635,7 +408,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:horizontal-pod-autoscaler
@@ -651,7 +424,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:job-controller
@@ -667,7 +440,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:legacy-service-account-token-cleaner
@@ -683,7 +456,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:namespace-controller
@@ -699,7 +472,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:node-controller
@@ -715,7 +488,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:persistent-volume-binder
@@ -731,7 +504,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:pod-garbage-collector
@@ -747,7 +520,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:pv-protection-controller
@@ -763,7 +536,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:pvc-protection-controller
@@ -779,7 +552,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:replicaset-controller
@@ -795,7 +568,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:replication-controller
@@ -811,7 +584,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:resource-claim-controller
@@ -827,7 +600,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:resourcequota-controller
@@ -843,7 +616,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:root-ca-cert-publisher
@@ -859,7 +632,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:route-controller
@@ -875,7 +648,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:selinux-warning-controller
@@ -891,7 +664,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:service-account-controller
@@ -907,7 +680,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:service-cidrs-controller
@@ -923,7 +696,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:service-controller
@@ -939,7 +712,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:statefulset-controller
@@ -955,7 +728,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:ttl-after-finished-controller
@@ -971,7 +744,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:ttl-controller
@@ -987,7 +760,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:validatingadmissionpolicy-status-controller
@@ -1003,7 +776,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:volumeattributesclass-protection-controller
@@ -1031,7 +804,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:discovery
@@ -1047,7 +820,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:kube-controller-manager
@@ -1063,7 +836,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:kube-dns
@@ -1079,7 +852,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:kube-scheduler
@@ -1095,7 +868,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:monitoring
@@ -1111,7 +884,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:node
@@ -1123,7 +896,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:node-proxier
@@ -1139,7 +912,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:public-info-viewer
@@ -1158,7 +931,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:service-account-issuer-discovery
@@ -1174,7 +947,7 @@ items:
   kind: ClusterRoleBinding
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:volume-scheduler
@@ -1187,4 +960,4 @@ items:
     kind: User
     name: system:kube-scheduler
 kind: List
-metadata:
+metadata: null

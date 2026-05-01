@@ -7,62 +7,6 @@ items:
       meta.helm.sh/release-name: diracx-cms
       meta.helm.sh/release-namespace: default
     labels:
-      app.kubernetes.io/managed-by: Helm
-    name: diracx-cms-cert-manager-issuer
-    namespace: default
-  rules:
-  - apiGroups:
-    - cert-manager.io
-    resources:
-    - issuers
-    - certificates
-    verbs:
-    - get
-    - list
-    - update
-    - create
-    - patch
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: webhook
-      app.kubernetes.io/component: webhook
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: webhook
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-webhook:dynamic-serving
-    namespace: default
-  rules:
-  - apiGroups:
-    - ""
-    resourceNames:
-    - diracx-cms-cert-manager-webhook-ca
-    resources:
-    - secrets
-    verbs:
-    - get
-    - list
-    - watch
-    - update
-  - apiGroups:
-    - ""
-    resources:
-    - secrets
-    verbs:
-    - create
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
       app.kubernetes.io/instance: diracx-cms
       app.kubernetes.io/managed-by: Helm
       app.kubernetes.io/name: dex
@@ -80,7 +24,7 @@ items:
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: Role
   metadata:
-    annotations:
+    annotations: null
     labels:
       app.kubernetes.io/component: controller
       app.kubernetes.io/instance: ingress-nginx
@@ -91,13 +35,13 @@ items:
     namespace: ingress-nginx
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - namespaces
     verbs:
     - get
   - apiGroups:
-    - ""
+    - ''
     resources:
     - configmaps
     - pods
@@ -108,7 +52,7 @@ items:
     - list
     - watch
   - apiGroups:
-    - ""
+    - ''
     resources:
     - services
     verbs:
@@ -153,7 +97,7 @@ items:
     verbs:
     - create
   - apiGroups:
-    - ""
+    - ''
     resources:
     - events
     verbs:
@@ -180,7 +124,7 @@ items:
     namespace: ingress-nginx
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - secrets
     verbs:
@@ -193,7 +137,7 @@ items:
     namespace: kube-public
   rules:
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - cluster-info
     resources:
@@ -204,14 +148,14 @@ items:
   kind: Role
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:bootstrap-signer
     namespace: kube-public
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - configmaps
     verbs:
@@ -219,7 +163,7 @@ items:
     - list
     - watch
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - cluster-info
     resources:
@@ -227,7 +171,7 @@ items:
     verbs:
     - update
   - apiGroups:
-    - ""
+    - ''
     - events.k8s.io
     resources:
     - events
@@ -239,81 +183,14 @@ items:
   kind: Role
   metadata:
     annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cainjector
-      app.kubernetes.io/component: cainjector
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cainjector
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager-cainjector:leaderelection
-    namespace: kube-system
-  rules:
-  - apiGroups:
-    - coordination.k8s.io
-    resourceNames:
-    - cert-manager-cainjector-leader-election
-    - cert-manager-cainjector-leader-election-core
-    resources:
-    - leases
-    verbs:
-    - get
-    - update
-    - patch
-  - apiGroups:
-    - coordination.k8s.io
-    resources:
-    - leases
-    verbs:
-    - create
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    annotations:
-      meta.helm.sh/release-name: diracx-cms
-      meta.helm.sh/release-namespace: default
-    labels:
-      app: cert-manager
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/instance: diracx-cms
-      app.kubernetes.io/managed-by: Helm
-      app.kubernetes.io/name: cert-manager
-      app.kubernetes.io/version: v1.13.1
-      helm.sh/chart: cert-manager-v1.13.1
-    name: diracx-cms-cert-manager:leaderelection
-    namespace: kube-system
-  rules:
-  - apiGroups:
-    - coordination.k8s.io
-    resourceNames:
-    - cert-manager-controller
-    resources:
-    - leases
-    verbs:
-    - get
-    - update
-    - patch
-  - apiGroups:
-    - coordination.k8s.io
-    resources:
-    - leases
-    verbs:
-    - create
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: extension-apiserver-authentication-reader
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - extension-apiserver-authentication
     resources:
@@ -329,7 +206,7 @@ items:
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - kube-proxy
     resources:
@@ -343,7 +220,7 @@ items:
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - kubelet-config
     resources:
@@ -357,7 +234,7 @@ items:
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - kubeadm-config
     resources:
@@ -368,20 +245,20 @@ items:
   kind: Role
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system::leader-locking-kube-controller-manager
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - configmaps
     verbs:
     - watch
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - kube-controller-manager
     resources:
@@ -413,20 +290,20 @@ items:
   kind: Role
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system::leader-locking-kube-scheduler
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - configmaps
     verbs:
     - watch
   - apiGroups:
-    - ""
+    - ''
     resourceNames:
     - kube-scheduler
     resources:
@@ -458,14 +335,14 @@ items:
   kind: Role
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:bootstrap-signer
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - secrets
     verbs:
@@ -476,14 +353,14 @@ items:
   kind: Role
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:cloud-provider
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - configmaps
     verbs:
@@ -495,14 +372,14 @@ items:
   kind: Role
   metadata:
     annotations:
-      rbac.authorization.kubernetes.io/autoupdate: "true"
+      rbac.authorization.kubernetes.io/autoupdate: 'true'
     labels:
       kubernetes.io/bootstrapping: rbac-defaults
     name: system:controller:token-cleaner
     namespace: kube-system
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - secrets
     verbs:
@@ -511,7 +388,7 @@ items:
     - list
     - watch
   - apiGroups:
-    - ""
+    - ''
     - events.k8s.io
     resources:
     - events
@@ -526,7 +403,7 @@ items:
     namespace: local-path-storage
   rules:
   - apiGroups:
-    - ""
+    - ''
     resources:
     - pods
     verbs:
@@ -539,4 +416,4 @@ items:
     - delete
 kind: List
 metadata:
-  resourceVersion: ""
+  resourceVersion: ''
