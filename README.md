@@ -433,3 +433,51 @@ The `helm/diracx/` directory is a skeleton ready for you to populate by converti
 raw manifests into parameterized templates. The upstream DiracX Helm chart lives at
 [github.com/DIRACGrid/diracx-charts](https://github.com/DIRACGrid/diracx-charts) and is
 the recommended path for production deployments.
+
+---
+
+### Integration
+
+To interact with the cluster directly using kubectl/helm you'll need to set the
+first following environment variables:
+
+```
+# setup environment
+
+export KUBECONFIG=/path/kube.conf
+export HELM_DATA_HOME=/path/helm_data
+
+# Then see the chart README for more information on how to use kubectl/helm.
+# To use the demo with the DiracX client set:
+
+export DIRACX_URL=https://cms-diracx-testX:8000
+export DIRACX_CA_PATH=/path/cms-diracx-ca.pem
+
+# To use the demo with a DiracX client without local installation:
+
+kubectl exec -it  deployment/diracx-cms-cli -- bash
+
+# To access the web application visit:
+
+https://cms-diracx-testX:8000
+
+# To access the interactive API documentation visit:
+
+https://cms-diracx-testX:8000/api/docs
+
+# When prompted to login the credentials are:
+
+Username: admin@example.com
+Password: password
+
+# Grafana dashboard for telemetry (if enabled)
+
+http://cms-diracx-testX:32004
+
+Username: admin
+Password: xxxx
+
+# you can obtain password using the following command
+kubectl get secrets diracx-demo-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+```
