@@ -54,8 +54,8 @@ Create `values-<clustername>.yaml`:
 
 ```yaml
 global:
-  hostname: cms-diracx-test20     # ← change per cluster
-  releaseName: diracx-cms         # ← change if you want a different k8s prefix
+  hostname: cms-diracx-test20     # change per cluster
+  releaseName: diracx-cms         # change if you want a different k8s prefix
   storageClass: cinder-standard-delete
   storageClassRWX: manila-meyrin-cephfs
 ```
