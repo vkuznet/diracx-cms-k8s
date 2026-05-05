@@ -1,0 +1,62 @@
+{{- $name := include "diracx-cms.name" . }}
+{{- $ns   := .Values.global.namespace }}
+---
+# Step 1: Bootstrap issuer (self-signed, used only to sign the CA cert)
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+# Step 2: Self-signed CA certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.certManager.caCertName }}
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  isCA: true
+  commonName: {{ .Values.certManager.caCertName }}
+  secretName: {{ .Values.certManager.caSecretName }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+# Step 3: CA issuer – used to sign the Ingress TLS cert
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.certManager.issuerName }}
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ .Values.certManager.caSecretName }}
+---
+# Ingress TLS certificate signed by the CA issuer
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $name }}-ingress-tls
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  secretName: {{ .Values.global.tlsSecretName }}
+  dnsNames:
+    - {{ .Values.global.hostname }}
+  issuerRef:
+    name: {{ .Values.certManager.issuerName }}
+    kind: {{ .Values.certManager.issuerKind }}
+    group: cert-manager.io

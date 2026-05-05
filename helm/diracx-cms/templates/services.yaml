@@ -1,0 +1,210 @@
+{{- $name := include "diracx-cms.name" . }}
+{{- $ns   := .Values.global.namespace }}
+
+# ── DiracX API ────────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: diracx
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: diracx
+    app.kubernetes.io/instance: {{ $name }}
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+
+# ── DiracX Web UI ─────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-web
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: diracx-web
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: diracx-web
+    app.kubernetes.io/instance: {{ $name }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+
+# ── Dex ───────────────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-dex
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: dex
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: dex
+    app.kubernetes.io/instance: {{ $name }}
+  ports:
+    - name: http
+      appProtocol: http
+      port: 8000
+      targetPort: http
+      nodePort: {{ .Values.dex.nodePort }}
+    - name: telemetry
+      appProtocol: http
+      port: 5558
+      targetPort: telemetry
+      nodePort: {{ .Values.dex.telemetryNodePort }}
+
+{{- if .Values.mysql.enabled }}
+# ── MySQL ─────────────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-mysql
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ $name }}
+    app.kubernetes.io/component: primary
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-mysql-headless
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ $name }}
+    app.kubernetes.io/component: primary
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+{{- end }}
+
+{{- if .Values.opensearch.enabled }}
+# ── OpenSearch ────────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch-cluster-master
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/instance: {{ $name }}
+  ports:
+    - name: http
+      port: 9200
+      targetPort: http
+    - name: transport
+      port: 9300
+      targetPort: transport
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch-cluster-master-headless
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/instance: {{ $name }}
+  ports:
+    - name: http
+      port: 9200
+    - name: transport
+      port: 9300
+    - name: metrics
+      port: 9600
+{{- end }}
+
+{{- if .Values.minio.enabled }}
+# ── MinIO ─────────────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-minio
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ $name }}
+  ports:
+    - name: http
+      port: 9000
+      targetPort: 9000
+      nodePort: {{ .Values.minio.nodePort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-minio-console
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ $name }}
+  ports:
+    - name: http
+      port: 9001
+      targetPort: 9001
+      nodePort: {{ .Values.minio.consoleNodePort }}
+{{- end }}

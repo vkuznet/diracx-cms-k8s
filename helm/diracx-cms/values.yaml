@@ -1,0 +1,191 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# diracx-cms Helm chart – values.yaml
+#
+# To deploy on a different cluster (e.g. cms-diracx-test20) the ONLY values
+# you normally need to change are:
+#   global.hostname          → new cluster hostname
+#   global.releaseName       → e.g. diracx-test20   (used as k8s name prefix)
+#
+# To use external MySQL / OpenSearch / MinIO set the matching
+#   mysql.enabled / opensearch.enabled / minio.enabled to false
+# and fill in the external.* block.
+# ─────────────────────────────────────────────────────────────────────────────
+
+global:
+  # Cluster hostname – used in Ingress, Dex issuer, DiracX auth redirects, etc.
+  # Change this for every target cluster.
+  hostname: cms-diracx-test18
+
+  # Kubernetes namespace
+  namespace: default
+
+  # Release / name prefix for all k8s objects.  Change when deploying a second
+  # instance on the same cluster to avoid name collisions.
+  releaseName: diracx-cms
+
+  # TLS secret created by cert-manager for the Ingress
+  tlsSecretName: myingress-cert
+
+  # StorageClass for ReadWriteOnce volumes (MySQL, OpenSearch data)
+  storageClass: cinder-standard-delete
+
+  # StorageClass for ReadWriteMany volumes (CS store, DiracX code)
+  storageClassRWX: manila-meyrin-cephfs
+
+# ─── Images ──────────────────────────────────────────────────────────────────
+images:
+  services:  ghcr.io/diracgrid/diracx/services:v0.0.13
+  client:    ghcr.io/diracgrid/diracx/client:v0.0.13
+  web:       ghcr.io/diracgrid/diracx-web/static:v0.1.0-a10
+  dex:       ghcr.io/dexidp/dex:v2.41.1
+  minio:     quay.io/minio/minio:RELEASE.2023-06-19T19-52-50Z
+  mysql:     docker.io/bitnamilegacy/mysql:8.0.34-debian-11-r8
+  opensearch: opensearchproject/opensearch:2.8.0
+  pullPolicy: Always
+
+# ─── DiracX API ──────────────────────────────────────────────────────────────
+diracx:
+  replicas: 1
+  # DiracX databases – names only; connection URLs are built from mysql.*
+  sqlDbs:
+    - AuthDB
+    - JobDB
+    - JobLoggingDB
+    - PilotAgentsDB
+    - SandboxMetadataDB
+    - TaskQueueDB
+  osDbs:
+    - JobParametersDB
+    - PilotLogsDB
+  # Runtime config
+  configBackendUrl: "git+file:///cs_store/initialRepo"
+  otelEnabled: "false"
+  otelGrpcInsecure: "true"
+  sandboxBucketName: demo-sandboxes
+  sandboxAutoCreateBucket: "true"
+  authAccessTokenExpireMinutes: "120"
+  authRefreshTokenExpireMinutes: "360"
+
+# ─── DiracX Web UI ───────────────────────────────────────────────────────────
+web:
+  replicas: 1
+
+# ─── Dex (OIDC provider) ─────────────────────────────────────────────────────
+dex:
+  replicas: 1
+  # NodePort for Dex – must be reachable by browsers
+  nodePort: 32002
+  telemetryNodePort: 30308
+  # Static demo admin user – replace for production
+  staticPasswords:
+    - email: admin@example.com
+      # bcrypt of "password"
+      hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+      username: admin
+      userID: 527B4AB9-95AE-4141-98B4-20E165834E97
+  staticClients:
+    - id: 25B10011-C687-4155-8E6F-51E7CE84981F
+      name: CLI app
+      public: true
+
+# ─── MySQL (bundled StatefulSet) ─────────────────────────────────────────────
+mysql:
+  # Set to false to use an external MySQL instance (fill in external.mysql)
+  enabled: true
+  replicas: 1
+  appUser: sqldiracx
+  dataVolumeSize: 8Gi
+  # Passwords – override with strong values for production
+  # These are used by the init-secrets job to create / update k8s secrets.
+  rootPassword: ""       # generated randomly by init-secrets when blank
+  appPassword: ""        # generated randomly by init-secrets when blank
+  replicationPassword: "" # generated randomly by init-secrets when blank
+
+# ─── OpenSearch (bundled StatefulSet) ────────────────────────────────────────
+opensearch:
+  # Set to false to use an external OpenSearch instance (fill in external.opensearch)
+  enabled: true
+  replicas: 1
+  dataVolumeSize: 8Gi
+  javaOpts: "-Xms256m -Xmx256m"
+  # Credentials – change for production
+  user: admin
+  password: admin
+
+# ─── MinIO (bundled Deployment) ──────────────────────────────────────────────
+minio:
+  # Set to false to use an external S3-compatible store (fill in external.minio)
+  enabled: true
+  nodePort: 32000
+  consoleNodePort: 32001
+  dataVolumeSize: 10Gi
+  rootUser: rootuser
+  rootPassword: rootpass123
+  # Access credentials used by DiracX to write sandbox files
+  accessKeyId: console
+  secretAccessKey: console123
+
+# ─── External services ───────────────────────────────────────────────────────
+# Populated when mysql.enabled / opensearch.enabled / minio.enabled is false.
+external:
+  mysql:
+    # host:port of your external MySQL server
+    host: ""
+    port: 3306
+    appUser: sqldiracx
+    appPassword: ""
+    rootUser: root
+    rootPassword: ""
+
+  opensearch:
+    # host:port of your external OpenSearch cluster
+    host: ""
+    port: 9200
+    user: admin
+    password: admin
+    useSSL: true
+    verifyCerts: false
+
+  minio:
+    # Full endpoint URL of your external S3 / MinIO service
+    endpointUrl: ""
+    accessKeyId: ""
+    secretAccessKey: ""
+
+# ─── Ingress ─────────────────────────────────────────────────────────────────
+ingress:
+  className: nginx
+  # Extra annotations (e.g. for cert-manager cluster-issuer)
+  annotations: {}
+
+# ─── cert-manager integration ────────────────────────────────────────────────
+certManager:
+  # Name of the cert-manager Issuer (namespaced) to use for TLS
+  issuerName: diracx-ca-issuer
+  issuerKind: Issuer   # or ClusterIssuer
+  # Self-signed CA certificate name
+  caCertName: diracx-selfsigned-ca
+  caSecretName: root-secret
+
+# ─── Persistent Volumes ──────────────────────────────────────────────────────
+persistence:
+  csStore:
+    size: 1Gi
+  diracxCode:
+    # Set to false if you are using pre-built images and don't need live source
+    enabled: true
+    size: 1Gi
+
+# ─── Service accounts ────────────────────────────────────────────────────────
+serviceAccounts:
+  - diracx-cms-dex
+  - diracx-cms-mysql
+  - diracx-cms
+  - minio-sa
+
+# ─── Jobs ────────────────────────────────────────────────────────────────────
+jobs:
+  # TTL in seconds for completed job pods (0 = delete immediately)
+  ttlSecondsAfterFinished: 3600
+  activeDeadlineSeconds: 900
+  backoffLimit: 6

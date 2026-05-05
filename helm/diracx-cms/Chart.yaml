@@ -1,0 +1,17 @@
+apiVersion: v2
+name: diracx-cms
+description: >
+  DiracX for CMS – packages the DiracX API, Web UI, Dex OIDC provider, and
+  optionally MySQL, OpenSearch and MinIO.  External instances of any of those
+  services can be used instead by setting the corresponding `*.enabled: false`
+  flag and supplying connection details under `external.*`.
+type: application
+version: 0.1.0
+appVersion: "v0.0.13"
+
+# cert-manager must be installed before this chart.
+# Recommended installation:
+#   helm repo add jetstack https://charts.jetstack.io
+#   helm install cert-manager jetstack/cert-manager \
+#     --namespace cert-manager --create-namespace --set installCRDs=true
+dependencies: []

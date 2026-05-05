@@ -1,0 +1,168 @@
+{{- $name := include "diracx-cms.name" . }}
+{{- $ns   := .Values.global.namespace }}
+
+{{- if .Values.mysql.enabled }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}-mysql
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ $name }}
+    app.kubernetes.io/component: primary
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.mysql.replicas }}
+  serviceName: {{ $name }}-mysql
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+      app.kubernetes.io/instance: {{ $name }}
+      app.kubernetes.io/component: primary
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/instance: {{ $name }}
+        app.kubernetes.io/component: primary
+    spec:
+      serviceAccountName: {{ $name }}-mysql
+      containers:
+        - name: mysql
+          image: {{ .Values.images.mysql }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MYSQL_USER
+              value: {{ .Values.mysql.appUser }}
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-password
+            - name: MYSQL_REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-replication-password
+          ports:
+            - name: mysql
+              containerPort: 3306
+          livenessProbe:
+            exec:
+              command: ["/bin/bash", "-ec", "mysqladmin status -uroot -p\"${MYSQL_ROOT_PASSWORD}\""]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            exec:
+              command: ["/bin/bash", "-ec", "mysqladmin status -uroot -p\"${MYSQL_ROOT_PASSWORD}\""]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 1
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/mysql
+            - name: custom-init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: custom-init-scripts
+          configMap:
+            name: mysql-init-diracx-dbs
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.global.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.mysql.dataVolumeSize }}
+{{- end }}
+
+{{- if .Values.opensearch.enabled }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch-cluster-master
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.opensearch.replicas }}
+  serviceName: opensearch-cluster-master-headless
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opensearch
+      app.kubernetes.io/instance: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opensearch
+        app.kubernetes.io/instance: {{ $name }}
+    spec:
+      initContainers:
+        - name: fsgroup-volume
+          image: docker.io/library/busybox:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data"]
+          volumeMounts:
+            - name: opensearch-cluster-master
+              mountPath: /usr/share/opensearch/data
+      containers:
+        - name: opensearch
+          image: {{ .Values.images.opensearch }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          env:
+            - name: discovery.seed_hosts
+              value: opensearch-cluster-master-headless
+            - name: cluster.name
+              value: opensearch-cluster
+            - name: network.host
+              value: "0.0.0.0"
+            - name: OPENSEARCH_JAVA_OPTS
+              value: {{ .Values.opensearch.javaOpts | quote }}
+            - name: node.roles
+              value: "master,ingest,data,remote_cluster_client,"
+            - name: discovery.type
+              value: single-node
+            - name: DISABLE_SECURITY_PLUGIN
+              value: "true"
+          ports:
+            - name: http
+              containerPort: 9200
+            - name: transport
+              containerPort: 9300
+            - name: metrics
+              containerPort: 9600
+          volumeMounts:
+            - name: opensearch-cluster-master
+              mountPath: /usr/share/opensearch/data
+            - name: config
+              mountPath: /usr/share/opensearch/config/opensearch.yml
+              subPath: opensearch.yml
+      volumes:
+        - name: config
+          configMap:
+            name: opensearch-cluster-master-config
+  volumeClaimTemplates:
+    - metadata:
+        name: opensearch-cluster-master
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.global.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.opensearch.dataVolumeSize }}
+{{- end }}

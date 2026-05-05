@@ -1,0 +1,45 @@
+{{- $name := include "diracx-cms.name" . }}
+{{- $ns   := .Values.global.namespace }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.global.hostname }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port:
+                  number: 8000
+          - path: /.well-known
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}-web
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - {{ .Values.global.hostname }}
+      secretName: {{ .Values.global.tlsSecretName }}

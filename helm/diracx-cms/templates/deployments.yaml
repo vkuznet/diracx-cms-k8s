@@ -1,0 +1,267 @@
+{{- $name := include "diracx-cms.name" . }}
+{{- $ns   := .Values.global.namespace }}
+{{- $host := .Values.global.hostname }}
+{{- $pubUrl := include "diracx-cms.publicUrl" . }}
+{{- $mysqlHost := include "diracx-cms.mysqlHost" . }}
+{{- $osHost   := include "diracx-cms.osHost" . }}
+
+# ── DiracX API ────────────────────────────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: diracx
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.diracx.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: diracx
+      app.kubernetes.io/instance: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: diracx
+        app.kubernetes.io/instance: {{ $name }}
+    spec:
+      initContainers:
+        - name: wait-for-mysql
+          image: docker.io/library/busybox:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh","-c","until nc -z {{ $mysqlHost | replace ":3306" "" }} 3306; do echo waiting; sleep 3; done"]
+        - name: wait-for-opensearch
+          image: docker.io/library/busybox:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh","-c","until nc -z {{ $osHost | replace ":9200" "" }} 9200; do echo waiting; sleep 3; done"]
+        {{- if .Values.minio.enabled }}
+        - name: wait-for-minio
+          image: docker.io/library/busybox:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh","-c","until nc -z {{ $host }} {{ .Values.minio.nodePort }}; do echo waiting; sleep 3; done"]
+        {{- end }}
+      containers:
+        - name: diracx
+          image: {{ .Values.images.services }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["/bin/bash", "/entrypoint.sh"]
+          args: ["gunicorn", "--bind=0.0.0.0:8000", "diracx.routers.app:app"]
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: diracx-secrets
+            - secretRef:
+                name: diracx-sql-connection-urls
+            - secretRef:
+                name: diracx-os-connection-urls
+            - secretRef:
+                name: diracx-dynamic-secrets
+          volumeMounts:
+            - name: cs-store-mount
+              mountPath: /cs_store
+            - name: container-entrypoint
+              mountPath: /entrypoint.sh
+              subPath: entrypoint.sh
+            - name: jwks-mount
+              mountPath: /keystore
+      volumes:
+        - name: cs-store-mount
+          persistentVolumeClaim:
+            claimName: pvc-cs-store
+        - name: container-entrypoint
+          configMap:
+            name: diracx-container-entrypoint
+            defaultMode: 0755
+        - name: jwks-mount
+          secret:
+            secretName: diracx-jwks
+
+# ── DiracX Web UI ─────────────────────────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-web
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: diracx-web
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.web.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: diracx-web
+      app.kubernetes.io/instance: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: diracx-web
+        app.kubernetes.io/instance: {{ $name }}
+    spec:
+      containers:
+        - name: diracx-web
+          image: {{ .Values.images.web }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+
+# ── DiracX CLI (always-on shell pod) ─────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-cli
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: diracx-cli
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: diracx-cli
+      app.kubernetes.io/instance: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: diracx-cli
+        app.kubernetes.io/instance: {{ $name }}
+    spec:
+      containers:
+        - name: diracx-cli
+          image: {{ .Values.images.client }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["sleep", "infinity"]
+          env:
+            - name: DIRACX_URL
+              value: {{ $pubUrl | quote }}
+            - name: DIRACX_CA_PATH
+              value: /ca/demo-ca.pem
+          volumeMounts:
+            - name: cs-store-mount
+              mountPath: /cs_store
+            - name: ca-mount
+              mountPath: /ca
+            - name: container-entrypoint
+              mountPath: /entrypoint.sh
+              subPath: entrypoint.sh
+      volumes:
+        - name: cs-store-mount
+          persistentVolumeClaim:
+            claimName: pvc-cs-store
+        - name: ca-mount
+          secret:
+            secretName: {{ .Values.certManager.caSecretName }}
+        - name: container-entrypoint
+          configMap:
+            name: diracx-container-entrypoint
+            defaultMode: 0755
+
+# ── Dex ───────────────────────────────────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-dex
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: dex
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.dex.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dex
+      app.kubernetes.io/instance: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dex
+        app.kubernetes.io/instance: {{ $name }}
+    spec:
+      serviceAccountName: {{ $name }}-dex
+      containers:
+        - name: dex
+          image: {{ .Values.images.dex }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["/usr/local/bin/dex", "serve", "/etc/dex/config.yaml"]
+          ports:
+            - name: http
+              containerPort: 8000
+            - name: telemetry
+              containerPort: 5558
+          volumeMounts:
+            - name: config
+              mountPath: /etc/dex
+      volumes:
+        - name: config
+          secret:
+            secretName: {{ $name }}-dex
+
+# ── MinIO ─────────────────────────────────────────────────────────────────────
+{{- if .Values.minio.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-minio
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ $name }}
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: minio
+      app.kubernetes.io/instance: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: minio
+        app.kubernetes.io/instance: {{ $name }}
+    spec:
+      containers:
+        - name: minio
+          image: {{ .Values.images.minio }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["/bin/sh", "-ce",
+            "/usr/bin/docker-entrypoint.sh minio server /export -S /etc/minio/certs/ --address :9000 --console-address :9001"]
+          env:
+            - name: MINIO_PROMETHEUS_AUTH_TYPE
+              value: public
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: "http://{{ $host }}:{{ .Values.minio.consoleNodePort }}"
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $name }}-minio
+                  key: rootUser
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $name }}-minio
+                  key: rootPassword
+          ports:
+            - name: http
+              containerPort: 9000
+            - name: console
+              containerPort: 9001
+          volumeMounts:
+            - name: export
+              mountPath: /export
+      volumes:
+        - name: export
+          persistentVolumeClaim:
+            claimName: {{ $name }}-minio
+{{- end }}

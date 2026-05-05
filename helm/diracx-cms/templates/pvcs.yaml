@@ -1,0 +1,50 @@
+{{- $name := include "diracx-cms.name" . }}
+{{- $ns   := .Values.global.namespace }}
+---
+# CS (Configuration Store) – needs ReadWriteMany so init-cs and the API pod
+# can both mount it simultaneously.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-cs-store
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: {{ .Values.global.storageClassRWX }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.csStore.size }}
+{{- if .Values.persistence.diracxCode.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-diracx-code
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: {{ .Values.global.storageClassRWX }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.diracxCode.size }}
+{{- end }}
+{{- if .Values.minio.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $name }}-minio
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.minio.dataVolumeSize }}
+{{- end }}

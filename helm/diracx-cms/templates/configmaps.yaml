@@ -1,0 +1,152 @@
+{{- $name := include "diracx-cms.name" . }}
+{{- $ns   := .Values.global.namespace }}
+---
+# Production entrypoint – no pip install -e (pre-built images)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: diracx-container-entrypoint
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+data:
+  entrypoint.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    IFS=$'\n\t'
+    ulimit -n 8192
+    if [ -f "/activate.sh" ]; then
+      source /activate.sh
+    else
+      eval "$(micromamba shell hook --shell=posix)" && micromamba activate base
+    fi
+    exec "$@"
+---
+# init-sql script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-init-sql
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+data:
+  init-sql: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python -m diracx.db init-sql
+---
+# init-os script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-init-os
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+data:
+  init-os: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python -m diracx.db init-os
+---
+# init-cs script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-init-cs
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+data:
+  init-cs: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dirac internal generate-cs /cs_store/initialRepo \
+      --vo diracAdmin \
+      --user-group admin \
+      --idp-url "{{ include "diracx-cms.dexIssuer" . }}" \
+      --idp-client-id "{{ (index .Values.dex.staticClients 0).id }}"
+---
+# init-secrets script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-init-secrets
+  namespace: {{ $ns }}
+  labels:
+    {{ include "diracx-cms.labels" . | nindent 4 }}
+data:
+  init-secrets: |
+    #!/usr/bin/env bash
+    NAMESPACE="{{ $ns }}"
+    MYSQL_HOST="{{ include "diracx-cms.mysqlHost" . }}"
+    MYSQL_APP_USER="{{ (.Values.mysql.enabled | ternary .Values.mysql.appUser .Values.external.mysql.appUser) }}"
+    MYSQL_SECRET_NAME="mysql-secret"
+    OS_HOST="{{ include "diracx-cms.osHost" . }}"
+    OS_USER="{{ (.Values.opensearch.enabled | ternary .Values.opensearch.user .Values.external.opensearch.user) }}"
+    OS_PASSWORD="{{ (.Values.opensearch.enabled | ternary .Values.opensearch.password .Values.external.opensearch.password) }}"
+    OS_ROOT_USER="${OS_USER}"
+    OS_ROOT_PASSWORD="${OS_PASSWORD}"
+    SQL_DBS=({{ range .Values.diracx.sqlDbs }}{{ . }} {{ end }})
+    OS_DBS=({{ range .Values.diracx.osDbs }}{{ . }} {{ end }})
+    set -euo pipefail
+    pushd "$(mktemp -d)"
+    function gen_random() { head -c 4096 /dev/urandom | LC_CTYPE=C tr -cd "$1" | head -c "$2"; }
+    function generate_secret_if_needed() {
+      local secret_name=$1; local secret_args=("${@:2}")
+      if ! kubectl --namespace="$NAMESPACE" get secret "$secret_name" >/dev/null 2>&1; then
+        echo "Creating secret \"${secret_name}\"..."
+        kubectl --namespace="$NAMESPACE" create secret generic "$secret_name" "${secret_args[@]}"
+      else
+        echo "Secret \"${secret_name}\" exists – checking for missing keys..."
+        for arg in "${secret_args[@]}"; do
+          local from; from=$(echo -n "${arg}" | cut -d'=' -f1)
+          [[ "${from}" != *"literal"* ]] && continue
+          local key; key=$(echo -n "${arg}" | cut -d'=' -f2)
+          local val; val=$(echo -n "${arg}" | cut -d'=' -f3-)
+          if ! kubectl --namespace="$NAMESPACE" get secret "$secret_name" \
+               -o jsonpath="{.data.${key}}" >/dev/null 2>&1; then
+            echo "  Patching missing key \"${key}\"..."
+            local enc=""; [[ -n "${val}" ]] && enc=$(echo -n "${val}" | base64 -w 0)
+            kubectl --namespace="$NAMESPACE" patch secret "${secret_name}" \
+              -p "{\"data\":{\"${key}\":\"${enc}\"}}"
+          fi
+        done
+      fi
+    }
+    echo "==> diracx-dynamic-secrets"
+    generate_secret_if_needed diracx-dynamic-secrets \
+      --from-literal=DIRACX_SERVICE_AUTH_STATE_KEY="$(head -c 32 /dev/urandom | base64)"
+    {{- if .Values.mysql.enabled }}
+    echo "==> ${MYSQL_SECRET_NAME}"
+    generate_secret_if_needed "${MYSQL_SECRET_NAME}" \
+      --from-literal=mysql-root-password="$(gen_random 'a-zA-Z0-9' 32)" \
+      --from-literal=mysql-replication-password="$(gen_random 'a-zA-Z0-9' 32)" \
+      --from-literal=mysql-password="$(gen_random 'a-zA-Z0-9' 32)"
+    MYSQL_APP_PASSWORD=$(kubectl get secret "${MYSQL_SECRET_NAME}" \
+      --namespace="$NAMESPACE" -o jsonpath="{.data.mysql-password}" | base64 -d)
+    MYSQL_ROOT_PASSWORD=$(kubectl get secret "${MYSQL_SECRET_NAME}" \
+      --namespace="$NAMESPACE" -o jsonpath="{.data.mysql-root-password}" | base64 -d)
+    {{- else }}
+    MYSQL_APP_PASSWORD="{{ .Values.external.mysql.appPassword }}"
+    MYSQL_ROOT_PASSWORD="{{ .Values.external.mysql.rootPassword }}"
+    {{- end }}
+    echo "==> SQL connection URLs"
+    for DB in "${SQL_DBS[@]}"; do
+      DB_UPPER=$(echo "${DB}" | tr '[:lower:]' '[:upper:]')
+      generate_secret_if_needed diracx-sql-connection-urls \
+        --from-literal="DIRACX_DB_URL_${DB_UPPER}=mysql+aiomysql://${MYSQL_APP_USER}:${MYSQL_APP_PASSWORD}@${MYSQL_HOST}/${DB}"
+      generate_secret_if_needed diracx-sql-root-connection-urls \
+        --from-literal="DIRACX_DB_URL_${DB_UPPER}=mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD}@${MYSQL_HOST}/${DB}"
+    done
+    echo "==> OpenSearch connection URLs"
+    for OSDB in "${OS_DBS[@]}"; do
+      OSDB_UPPER=$(echo "${OSDB}" | tr '[:lower:]' '[:upper:]')
+      generate_secret_if_needed diracx-os-connection-urls \
+        --from-literal="DIRACX_OS_DB_${OSDB_UPPER}={\"hosts\": \"${OS_USER}:${OS_PASSWORD}@${OS_HOST}\", \"use_ssl\": true, \"verify_certs\": false}"
+      generate_secret_if_needed diracx-os-root-connection-urls \
+        --from-literal="DIRACX_OS_DB_${OSDB_UPPER}={\"hosts\": \"${OS_ROOT_USER}:${OS_ROOT_PASSWORD}@${OS_HOST}\", \"use_ssl\": true, \"verify_certs\": false}"
+    done
+    echo "==> Done."
+    popd
