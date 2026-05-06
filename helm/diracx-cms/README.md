@@ -54,20 +54,52 @@ Create `values-<clustername>.yaml`:
 
 ```yaml
 global:
+  namespace: diracx-cms
   hostname: cms-diracx-test20     # change per cluster
   releaseName: diracx-cms         # change if you want a different k8s prefix
-  storageClass: cinder-standard-delete
-  storageClassRWX: manila-meyrin-cephfs
+  storageClass: cinder-standard-delete # change if necessary
+  storageClassRWX: manila-meyrin-cephfs # change if necessary
 ```
 
 That is all that is required to target a new cluster.
 
+For example, when you use local k8s cluster, e.g. running docker desktop
+with kind cluster, you may use the following values:
+
+```yaml
+global:
+  namespace: diracx-cms
+  hostname: localhost
+  releaseName: diracx-cms
+  storageClass: hostpath
+  storageClassRWX: hostpath
+```
+
+If you are unware which storage class is available to you just use the
+following command:
+
+```bash
+kubectl get storageclass
+```
+
 ### Install
 
 ```bash
+# step 1: create your values-my.yaml file
+# here is the one I use on local k8s cluster
+cat values-my.yaml
+
+global:
+  namespace: diracx-cms
+  hostname: localhost
+  releaseName: diracx-cms
+  storageClass: hostpath
+  storageClassRWX: hostpath
+
+# install helm chart
 helm install diracx-cms ./helm/diracx-cms \
-  -f values-cms-diracx-test20.yaml \
-  --namespace default \
+  -f values-my.yaml \
+  --namespace default --create-namespace \
   --wait
 ```
 

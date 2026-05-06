@@ -11,7 +11,7 @@ Uses bundled service when mysql.enabled, otherwise external host:port.
 */}}
 {{- define "diracx-cms.mysqlHost" -}}
 {{- if .Values.mysql.enabled -}}
-{{ include "diracx-cms.name" . }}-mysql:3306
+{{ include "diracx-cms.name" . }}-mysql
 {{- else -}}
 {{ required "external.mysql.host is required when mysql.enabled=false" .Values.external.mysql.host }}:{{ .Values.external.mysql.port | default 3306 }}
 {{- end }}

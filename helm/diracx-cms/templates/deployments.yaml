@@ -28,39 +28,138 @@ spec:
         app.kubernetes.io/name: diracx
         app.kubernetes.io/instance: {{ $name }}
     spec:
+      #serviceAccountName: {{ $name }}
+      serviceAccountName: {{ $name }}-init-secrets
       initContainers:
+        # init-secrets
+        - name: init-secrets
+          image: ghcr.io/diracgrid/diracx/secret-generation:latest
+          imagePullPolicy: Always
+          command: ["/bin/bash", "/scripts/init-secrets"]
+          volumeMounts:
+            - name: scripts-init-secrets
+              mountPath: /scripts
+        # init-cs
+        - name: init-cs
+          image: {{ .Values.images.client }}
+          command: ["/bin/bash", "/entrypoint.sh"]
+          args: ["/bin/bash", "/scripts/init-cs"]
+          volumeMounts:
+            - name: scripts-init-cs
+              mountPath: /scripts
+            - name: cs-store-mount
+              mountPath: /cs_store
+            - name: container-entrypoint
+              mountPath: /entrypoint.sh
+              subPath: entrypoint.sh
+        # init-keystore
+        - name: init-keystore
+          image: {{ .Values.images.services }}
+          command: ["/bin/bash", "/entrypoint.sh"]
+          args: ["/bin/bash", "/scripts/init-keystore"]
+          volumeMounts:
+            - name: keystore-tmp
+              mountPath: /keystore
+            - name: scripts-init-keystore
+              mountPath: /scripts
+            - name: diracx-src
+              mountPath: /src
+            - name: container-entrypoint
+              mountPath: /entrypoint.sh
+              subPath: entrypoint.sh
+        - name: load-keystore
+          image: ghcr.io/diracgrid/diracx/secret-generation:latest
+          command: ["/bin/bash", "/scripts/load-keystore-as-secret"]
+          volumeMounts:
+            - name: keystore-tmp
+              mountPath: /keystore
+            - name: scripts-init-keystore
+              mountPath: /scripts
         - name: wait-for-mysql
           image: docker.io/library/busybox:latest
           imagePullPolicy: IfNotPresent
-          command: ["sh","-c","until nc -z {{ $mysqlHost | replace ":3306" "" }} 3306; do echo waiting; sleep 3; done"]
+          command: ["sh","-c","until nc -z diracx-cms-mysql 3306; do echo 'Waiting for mysql...'; sleep 3; done;"]
         - name: wait-for-opensearch
           image: docker.io/library/busybox:latest
           imagePullPolicy: IfNotPresent
-          command: ["sh","-c","until nc -z {{ $osHost | replace ":9200" "" }} 9200; do echo waiting; sleep 3; done"]
+          command: ["sh","-c","until nc -z {{ $osHost | replace ":9200" "" }} 9200; do echo 'Waiting for opensearch...'; sleep 3; done;"]
         {{- if .Values.minio.enabled }}
         - name: wait-for-minio
           image: docker.io/library/busybox:latest
           imagePullPolicy: IfNotPresent
-          command: ["sh","-c","until nc -z {{ $host }} {{ .Values.minio.nodePort }}; do echo waiting; sleep 3; done"]
+          command: ["sh","-c","until echo -e \"HEAD /minio/health/live HTTP/1.1\\nHost: {{ $name }}-minio\\nConnection: close\\n\" | nc {{ $name }}-minio:9000 | grep \"HTTP/1.1 200 OK\"; do echo 'Waiting for minio...'; sleep 3; done;"]
         {{- end }}
+        # init-sql
+        - name: init-sql
+          image: {{ .Values.images.services }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["/bin/bash", "/entrypoint.sh"]
+          args: ["/bin/bash", "/scripts/init-sql"]
+          env:
+          {{- range .Values.diracx.sqlDbs }}
+            - name: DIRACX_DB_URL_{{ . | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: diracx-sql-root-connection-urls
+                  key: DIRACX_DB_URL_{{ . | upper }}
+          {{- end }}
+          volumeMounts:
+            - name: scripts-init-sql
+              mountPath: /scripts
+            - name: container-entrypoint
+              mountPath: /entrypoint.sh
+              subPath: entrypoint.sh
       containers:
         - name: diracx
           image: {{ .Values.images.services }}
           imagePullPolicy: {{ .Values.images.pullPolicy }}
-          command: ["/bin/bash", "/entrypoint.sh"]
-          args: ["gunicorn", "--bind=0.0.0.0:8000", "diracx.routers.app:app"]
+          command:
+            - /usr/local/bin/_entrypoint.sh
+            - tini
+            - --
+            - bash
+            - /entrypoint.sh
+          args:
+            - uvicorn
+            - --factory
+            - diracx.routers:create_app
+            - --host=0.0.0.0
+            - --port=8000
+            - --proxy-headers
+            - --forwarded-allow-ips=*
           ports:
             - name: http
               containerPort: 8000
+          startupProbe:
+            httpGet:
+              path: /api/health/startup
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health/live
+              port: http
+            failureThreshold: 3
+            periodSeconds: 20
+            timeoutSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: http
+            failureThreshold: 3
+            periodSeconds: 20
+            timeoutSeconds: 15
           envFrom:
             - secretRef:
                 name: diracx-secrets
             - secretRef:
+                name: diracx-dynamic-secrets
+            - secretRef:
                 name: diracx-sql-connection-urls
             - secretRef:
                 name: diracx-os-connection-urls
-            - secretRef:
-                name: diracx-dynamic-secrets
           volumeMounts:
             - name: cs-store-mount
               mountPath: /cs_store
@@ -69,6 +168,8 @@ spec:
               subPath: entrypoint.sh
             - name: jwks-mount
               mountPath: /keystore
+            - name: diracx-src
+              mountPath: /src
       volumes:
         - name: cs-store-mount
           persistentVolumeClaim:
@@ -80,6 +181,30 @@ spec:
         - name: jwks-mount
           secret:
             secretName: diracx-jwks
+            items:
+              - key: jwks.json
+                path: jwks.json
+        - name: diracx-src
+          persistentVolumeClaim:
+            claimName: pvc-diracx-code
+        - name: scripts-init-secrets
+          configMap:
+            name: {{ $name }}-init-secrets
+            defaultMode: 0755
+        - name: scripts-init-cs
+          configMap:
+            name: {{ $name }}-init-cs
+            defaultMode: 0755
+        - name: scripts-init-keystore
+          configMap:
+            name: {{ $name }}-init-keystore
+            defaultMode: 0755
+        - name: scripts-init-sql
+          configMap:
+            name: {{ $name }}-init-sql
+            defaultMode: 0755
+        - name: keystore-tmp
+          emptyDir: {}
 
 # ── DiracX Web UI ─────────────────────────────────────────────────────────────
 ---

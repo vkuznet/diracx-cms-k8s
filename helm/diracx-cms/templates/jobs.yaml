@@ -191,11 +191,15 @@ spec:
         - name: diracx-init-keystore
           image: {{ .Values.images.services }}
           imagePullPolicy: {{ .Values.images.pullPolicy }}
-          command: ["/bin/bash", "/entrypoint.sh", "python", "-m",
-                    "diracx.core.utils", "generate-jwks", "/keystore/jwks.json"]
+          command: ["/bin/bash", "/entrypoint.sh"]
+          args: ["/bin/bash", "/scripts/init-keystore"]
           volumeMounts:
             - name: keystore
               mountPath: /keystore
+            - name: scripts
+              mountPath: /scripts
+            - name: diracx-src
+              mountPath: /src
             - name: container-entrypoint
               mountPath: /entrypoint.sh
               subPath: entrypoint.sh
@@ -203,18 +207,26 @@ spec:
         - name: diracx
           image: ghcr.io/diracgrid/diracx/secret-generation:latest
           imagePullPolicy: Always
-          command: ["/bin/bash", "-c",
-            "kubectl --namespace={{ $ns }} create secret generic diracx-jwks --from-file=jwks.json=/keystore/jwks.json --dry-run=client -o yaml | kubectl apply -f -"]
+          command: ["/bin/bash", "/scripts/load-keystore-as-secret"]
           volumeMounts:
+            - name: scripts
+              mountPath: /scripts
             - name: keystore
               mountPath: /keystore
       volumes:
         - name: keystore
           emptyDir: {}
+        - name: scripts
+          configMap:
+            name: {{ $name }}-init-keystore
+            defaultMode: 0755
         - name: container-entrypoint
           configMap:
             name: diracx-container-entrypoint
             defaultMode: 0755
+        - name: diracx-src
+          persistentVolumeClaim:
+            claimName: pvc-diracx-code
 
 # ── init-cs (configuration store) ────────────────────────────────────────────
 ---

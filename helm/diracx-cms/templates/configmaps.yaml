@@ -62,11 +62,30 @@ data:
   init-cs: |
     #!/usr/bin/env bash
     set -euo pipefail
-    dirac internal generate-cs /cs_store/initialRepo \
-      --vo diracAdmin \
-      --user-group admin \
-      --idp-url "{{ include "diracx-cms.dexIssuer" . }}" \
-      --idp-client-id "{{ (index .Values.dex.staticClients 0).id }}"
+
+    # 1. Activate the environment
+    source /activate.sh
+
+    # 2. Add diracx code from PVC to PYTHONPATH
+    export PYTHONPATH=${PYTHONPATH:+$PYTHONPATH:}:/src/diracx-logic/src:/src/diracx-core/src
+
+    # Optional debug (very useful)
+    echo "PYTHONPATH=$PYTHONPATH"
+    ls -l /src || true
+
+    # 3. Initialize the Configuration Service
+    echo "Initializing Configuration Service in /cs_store..."
+
+    CS_DIR=/cs_store/initialRepo
+
+    if [[ -d "$CS_DIR" ]]; then
+      echo "Configuration Service already exists at $CS_DIR, skipping."
+    else
+      echo "Creating Configuration Service at $CS_DIR..."
+      dirac internal generate-cs "$CS_DIR"
+    fi
+
+    echo "CS initialization complete."
 ---
 # init-secrets script
 apiVersion: v1
@@ -150,3 +169,109 @@ data:
     done
     echo "==> Done."
     popd
+---
+apiVersion: v1
+data:
+  init-diracx-dbs.sql: 'CREATE DATABASE IF NOT EXISTS `AuthDB`;
+    GRANT ALL PRIVILEGES ON AuthDB.* TO ''diracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `JobDB`;
+    GRANT ALL PRIVILEGES ON JobDB.* TO ''diracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `JobLoggingDB`;
+    GRANT ALL PRIVILEGES ON JobLoggingDB.* TO ''diracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `PilotAgentsDB`;
+    GRANT ALL PRIVILEGES ON PilotAgentsDB.* TO ''diracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `SandboxMetadataDB`;
+    GRANT ALL PRIVILEGES ON SandboxMetadataDB.* TO ''diracx''@''%'';
+
+    CREATE DATABASE IF NOT EXISTS `TaskQueueDB`;
+    GRANT ALL PRIVILEGES ON TaskQueueDB.* TO ''diracx''@''%'';
+
+    FLUSH PRIVILEGES;
+
+    '
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: mysql-init-diracx-dbs
+  namespace: {{ $ns }}
+---
+apiVersion: v1
+data:
+  opensearch.yml: "cluster.name: opensearch-cluster\n\n# Bind to all interfaces because\
+    \ we don't know what IP address Docker will assign to us.\nnetwork.host: 0.0.0.0\n\
+    \n# Setting network.host to a non-loopback address enables the annoying bootstrap\
+    \ checks. \"Single-node\" mode disables them again.\n# Implicitly done if \".singleNode\"\
+    \ is set to \"true\".\n# discovery.type: single-node\n\n# Start OpenSearch Security\
+    \ Demo Configuration\n# WARNING: revise all the lines below before you go into\
+    \ production\nplugins:\n  security:\n    ssl:\n      transport:\n        pemcert_filepath:\
+    \ esnode.pem\n        pemkey_filepath: esnode-key.pem\n        pemtrustedcas_filepath:\
+    \ root-ca.pem\n        enforce_hostname_verification: false\n      http:\n   \
+    \     enabled: true\n        pemcert_filepath: esnode.pem\n        pemkey_filepath:\
+    \ esnode-key.pem\n        pemtrustedcas_filepath: root-ca.pem\n    allow_unsafe_democertificates:\
+    \ true\n    allow_default_init_securityindex: true\n    authcz:\n      admin_dn:\n\
+    \        - CN=kirk,OU=client,O=client,L=test,C=de\n    audit.type: internal_opensearch\n\
+    \    enable_snapshot_restore_privilege: true\n    check_snapshot_restore_write_privileges:\
+    \ true\n    restapi:\n      roles_enabled: [\"all_access\", \"security_rest_api_access\"\
+    ]\n    system_indices:\n      enabled: true\n      indices:\n        [\n     \
+    \     \".opendistro-alerting-config\",\n          \".opendistro-alerting-alert*\"\
+    ,\n          \".opendistro-anomaly-results*\",\n          \".opendistro-anomaly-detector*\"\
+    ,\n          \".opendistro-anomaly-checkpoints\",\n          \".opendistro-anomaly-detection-state\"\
+    ,\n          \".opendistro-reports-*\",\n          \".opendistro-notifications-*\"\
+    ,\n          \".opendistro-notebooks\",\n          \".opendistro-asynchronous-search-response*\"\
+    ,\n        ]\n######## End OpenSearch Security Demo Configuration ########\ncluster:\n\
+    \  routing:\n    allocation:\n      disk:\n        threshold_enabled: \"true\"\
+    \n        watermark:\n          flood_stage: 200mb\n          low: 500mb\n   \
+    \       high: 300mb\n"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: opensearch-cluster-master
+    app.kubernetes.io/instance: diracx-cms
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/version: 2.8.0
+    helm.sh/chart: opensearch-2.13.1
+  name: opensearch-cluster-master-config
+  namespace: {{ $ns }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: diracx-cms-init-keystore
+  namespace: {{ $ns }}
+data:
+  init-keystore: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source /activate.sh
+
+    # POINT PYTHON TO THE MOUNTED SOURCE
+    export PYTHONPATH=${PYTHONPATH:-}:/src/diracx-logic/src:/src/diracx-core/src
+
+    mkdir -p /keystore
+    KEYSTORE_PATH=/keystore/jwks.json
+
+    if [[ -f $KEYSTORE_PATH ]]; then
+        echo "JWKS already exists, skipping."
+        exit 0
+    fi
+
+    python -m diracx.logic rotate-jwk --jwks-path $KEYSTORE_PATH
+
+  load-keystore-as-secret: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    KEYSTORE_PATH=/keystore/jwks.json
+
+    if kubectl get secret diracx-jwks >/dev/null 2>&1; then
+      echo "diracx-jwks already present, skipping."
+      exit 0
+    fi
+
+    kubectl create secret generic diracx-jwks --from-file=jwks.json=$KEYSTORE_PATH
