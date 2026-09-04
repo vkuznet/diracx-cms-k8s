@@ -6,7 +6,7 @@ global:
   storageClassRWX: hostpath
 
 developer:
-  enabled: true
+  enabled: false
 
 # ── MySQL ─────────────────────────────────────
 mysql:
