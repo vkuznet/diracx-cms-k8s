@@ -1,48 +1,7 @@
 {{- $name := include "diracx-cms.name" . }}
 {{- $ns   := .Values.global.namespace }}
----
-# Production entrypoint – no pip install -e (pre-built images)
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: diracx-container-entrypoint
-  namespace: {{ $ns }}
-  labels:
-    {{ include "diracx-cms.labels" . | nindent 4 }}
-data:
-  entrypoint.sh: |
-    #!/bin/bash
-    set -euo pipefail
-    IFS=$'\n\t'
-    ulimit -n 8192
-    if [ -f "/activate.sh" ]; then
-      source /activate.sh
-    else
-      eval "$(micromamba shell hook --shell=posix)" && micromamba activate base
-    fi
-    if [ -f /cs_config/default.yml ]; then
-      echo "Using provided Configuration Service file: /cs_config/default.yml"
-      if [ -f /cs_store/initialRepo/default.yml ] && [ -f /cs_config/default.yml ]; then
-        echo "Copy /cs_config/default.yml to /cs_store/initialRepo/default.yml"
-        rm /cs_store/initialRepo/default.yml
-        cp /cs_config/default.yml /cs_store/initialRepo/default.yml
-        echo "ls -al /cs_store/initialRepo/default.yml"
-        ls -al /cs_store/initialRepo/default.yml
-        # the default.yml file is provided locally
-        # we MUST run git commit on this rewrite to make sure
-        # that master branch contains this changes
-        # see diracx implementation in core/config/sources.py
-        # https://github.com/DIRACGrid/diracx/blob/main/diracx-core/src/diracx/core/config/sources.py
-        cd /cs_store/initialRepo/
-        git config --global user.email "you@example.com"
-        git config --global user.name "Your Name"
-        git commit -m "update" -a
-        cd -
-      fi
-    fi
-    exec "$@"
----
 # init-sql script
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -69,9 +28,9 @@ data:
     #!/usr/bin/env bash
     set -euo pipefail
     python -m diracx.db init-os
+{{- if .Values.csConfig.file }}
 ---
 # cs-config
-{{- if .Values.csConfig.file }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

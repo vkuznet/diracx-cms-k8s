@@ -41,11 +41,6 @@ spec:
         - name: diracx-src
           persistentVolumeClaim:
             claimName: pvc-diracx-code
-        {{- if .Values.developer.enabled }}
-        - name: cs-store-mount
-          persistentVolumeClaim:
-            claimName: pvc-cs-store
-        {{- end }}
         {{- if and .Values.developer.enabled .Values.developer.mountedPythonModulesToInstall }}
         - name: diracx-code-mount
           persistentVolumeClaim:

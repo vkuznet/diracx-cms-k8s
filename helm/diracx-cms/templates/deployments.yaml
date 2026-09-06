@@ -219,30 +219,30 @@ spec:
           ports:
             - name: http
               containerPort: 8000
-          startupProbe:
-            httpGet:
-              path: /api/health/startup
-              port: http
-            failureThreshold: 30
-            periodSeconds: 5
-            timeoutSeconds: 5
-            initialDelaySeconds: 60
-          livenessProbe:
-            httpGet:
-              path: /api/health/live
-              port: http
-            failureThreshold: 3
-            periodSeconds: 20
-            timeoutSeconds: 15
-            initialDelaySeconds: 30
-          readinessProbe:
-            httpGet:
-              path: /api/health/ready
-              port: http
-            failureThreshold: 3
-            periodSeconds: 20
-            timeoutSeconds: 15
-            initialDelaySeconds: 30
+#          startupProbe:
+#            httpGet:
+#              path: /api/health/startup
+#              port: http
+#            failureThreshold: 30
+#            periodSeconds: 5
+#            timeoutSeconds: 5
+#            initialDelaySeconds: 60
+#          livenessProbe:
+#            httpGet:
+#              path: /api/health/live
+#              port: http
+#            failureThreshold: 3
+#            periodSeconds: 20
+#            timeoutSeconds: 15
+#            initialDelaySeconds: 30
+#          readinessProbe:
+#            httpGet:
+#              path: /api/health/ready
+#              port: http
+#            failureThreshold: 3
+#            periodSeconds: 20
+#            timeoutSeconds: 15
+#            initialDelaySeconds: 30
           env:
             - name: PYTHONPATH
               value: /src/diracx/diracx-tasks/src
