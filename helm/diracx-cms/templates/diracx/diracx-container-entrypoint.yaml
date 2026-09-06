@@ -24,8 +24,12 @@ data:
     pip install{{ if .Values.developer.offline }} --no-build-isolation{{ end }} {{- range $moduleSpec := .Values.diracx.pythonModulesToInstall }} {{ $moduleSpec | quote }} {{- end }}
     {{- end }}
 
-    {{ if .Values.developer.mountedPythonModulesToInstall }}
-    pip install{{ if .Values.developer.offline }} --no-build-isolation{{ end }} {{- range $moduleName := .Values.developer.mountedPythonModulesToInstall }} {{ if $.Values.developer.editableMountedPythonModules }}-e {{ end }}{{ $.Values.developer.sourcePath }}/{{ $moduleName }} {{- end }}
+    {{ if and .Values.developer.enabled .Values.developer.mountedPythonModulesToInstall }}
+    {{- range $moduleName := .Values.developer.mountedPythonModulesToInstall }}
+    if [ -d "{{ $.Values.developer.sourcePath }}/{{ $moduleName }}" ]; then
+      pip install{{ if $.Values.developer.offline }} --no-build-isolation{{ end }} {{ if $.Values.developer.editableMountedPythonModules }}-e {{ end }}"{{ $.Values.developer.sourcePath }}/{{ $moduleName }}"
+    fi
+    {{- end }}
     {{- end }}
 
     {{- if and .Values.developer.enabled .Values.developer.enableCoverage }}

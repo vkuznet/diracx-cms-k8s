@@ -14,7 +14,7 @@
 global:
   # Cluster hostname – used in Ingress, Dex issuer, DiracX auth redirects, etc.
   # Change this for every target cluster.
-  hostname: cms-diracx-test18
+  hostname: cms-diracx-test18.cern.ch
 
   # Kubernetes namespace
   namespace: default
