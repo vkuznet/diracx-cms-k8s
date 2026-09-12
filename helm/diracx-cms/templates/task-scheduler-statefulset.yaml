@@ -75,7 +75,7 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: [ "/usr/local/bin/_entrypoint.sh", "tini", "--", "bash", "/entrypoint.sh" ]
           args:
-            - diracx-task-run
+            - diracx-tasks
             - scheduler
           volumeMounts:
             - name: cs-store-mount
@@ -91,6 +91,8 @@ spec:
             - name: PYTHONPATH
               value: {{ $.Values.taskWorkers.pythonPath | quote }}
             - name: DIRACX_TASKS_CONDOR_JOB_EXECUTOR_ENABLED
+              value: {{ if hasKey $.Values.taskWorkers "condorJobExecutorEnabled" }}{{ $.Values.taskWorkers.condorJobExecutorEnabled | quote }}{{ else }}"true"{{ end }}
+            - name: DIRACX_TASKS_CONDOR_JOB_STATUS_COLLECTOR_ENABLED
               value: {{ if hasKey $.Values.taskWorkers "condorJobExecutorEnabled" }}{{ $.Values.taskWorkers.condorJobExecutorEnabled | quote }}{{ else }}"true"{{ end }}
           envFrom:
             - secretRef:

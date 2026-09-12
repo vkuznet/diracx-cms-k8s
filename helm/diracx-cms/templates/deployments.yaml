@@ -65,6 +65,8 @@ spec:
               subPath: entrypoint.sh
             - name: cs-store-mount
               mountPath: /cs_store
+            - name: diracx-src
+              mountPath: /src
             {{- if .Values.csConfig.file }}
             - name: cs-config-file
               mountPath: /cs_config

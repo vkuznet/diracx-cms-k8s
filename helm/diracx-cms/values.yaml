@@ -111,6 +111,10 @@ developer:
   urls: {}
   # -- Path from which to mount source of DIRACX
   sourcePath: /src/diracx
+  # -- Git repository to clone into sourcePath when configured
+  sourceRepository: ""
+  # -- Branch or tag to clone from sourceRepository
+  sourceRef: ""
   # -- List of packages which are mounted into developer.sourcePath and should be installed with pip install SOURCEPATH/...
   mountedPythonModulesToInstall:
     - diracx-tasks
