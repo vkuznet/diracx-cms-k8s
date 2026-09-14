@@ -19,26 +19,6 @@ spec:
 {{- if .Values.persistence.diracxCode.enabled }}
 ---
 apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-diracx-code
-  labels:
-    {{ include "diracx-cms.labels" . | nindent 4 }}
-spec:
-  capacity:
-    storage: {{ .Values.persistence.diracxCode.size }}
-
-  accessModes:
-    - ReadWriteMany
-
-  persistentVolumeReclaimPolicy: Retain
-
-  storageClassName: manual
-
-  hostPath:
-    path: {{ .Values.persistence.diracxCode.path }}
----
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-diracx-code
@@ -47,11 +27,10 @@ metadata:
     {{ include "diracx-cms.labels" . | nindent 4 }}
 spec:
   accessModes: [ReadWriteMany]
-  storageClassName: manual
+  storageClassName: {{ .Values.global.storageClassRWX }}
   resources:
     requests:
       storage: {{ .Values.persistence.diracxCode.size }}
-  volumeName: pv-diracx-code
 {{- end }}
 {{- if .Values.minio.enabled }}
 ---

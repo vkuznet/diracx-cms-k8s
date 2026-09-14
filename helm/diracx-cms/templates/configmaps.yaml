@@ -19,6 +19,31 @@ data:
     else
       eval "$(micromamba shell hook --shell=posix)" && micromamba activate base
     fi
+    {{- if and .Values.developer.enabled .Values.developer.sourceRepository }}
+    source_path={{ .Values.developer.sourcePath | quote }}
+    source_repository={{ .Values.developer.sourceRepository | quote }}
+    source_ref={{ .Values.developer.sourceRef | quote }}
+    if [[ ! -d "${source_path}/.git" ]]; then
+      mkdir -p "$(dirname "${source_path}")"
+      clone_lock="${source_path}.clone.lock"
+      while ! mkdir "${clone_lock}" 2>/dev/null; do
+        if [[ -d "${source_path}/.git" ]]; then
+          break 2
+        fi
+        sleep 1
+      done
+      if [[ ! -d "${source_path}/.git" ]]; then
+        trap 'rmdir "${clone_lock}"' EXIT
+        if [[ -n "${source_ref}" ]]; then
+          git clone --branch "${source_ref}" "${source_repository}" "${source_path}"
+        else
+          git clone "${source_repository}" "${source_path}"
+        fi
+        rmdir "${clone_lock}"
+        trap - EXIT
+      fi
+    fi
+    {{- end }}
     if [ -f /cs_config/default.yml ]; then
       echo "Using provided Configuration Service file: /cs_config/default.yml"
       if [ -f /cs_store/initialRepo/default.yml ] && [ -f /cs_config/default.yml ]; then
@@ -34,7 +59,9 @@ data:
         cd /cs_store/initialRepo/
         git config --global user.email "you@example.com"
         git config --global user.name "Your Name"
-        git commit -m "update" -a
+        if ! git diff --quiet; then
+          git commit -m "update" -a
+        fi
         cd -
       fi
     fi
