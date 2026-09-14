@@ -1,6 +1,8 @@
+{{- if .Values.certManager.enabled }}
 {{- $name := include "diracx-cms.name" . }}
 {{- $ns   := .Values.global.namespace }}
----
+
+{{- if .Values.certManager.createSelfSignedCa }}
 # Step 1: Bootstrap issuer (self-signed, used only to sign the CA cert)
 apiVersion: cert-manager.io/v1
 kind: Issuer
@@ -32,7 +34,9 @@ spec:
     kind: Issuer
     group: cert-manager.io
 ---
-# Step 3: CA issuer – used to sign the Ingress TLS cert
+{{- end }}
+
+# Step 3: CA issuer – points to your custom or self-signed caSecretName
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -60,3 +64,4 @@ spec:
     name: {{ .Values.certManager.issuerName }}
     kind: {{ .Values.certManager.issuerKind }}
     group: cert-manager.io
+{{- end }}

@@ -297,7 +297,12 @@ ingress:
 
 # ─── cert-manager integration ────────────────────────────────────────────────
 certManager:
-  # Name of the cert-manager Issuer (namespaced) to use for TLS
+  enabled: true
+  # specify tls file names to be used the raw PEM content injected at runtime via helm --set-file
+  tlsCert: ""
+  tlsKey: ""
+  # Set to false when providing your own cluster CA cert/key in caSecretName
+  createSelfSignedCa: true
   issuerName: diracx-ca-issuer
   issuerKind: Issuer   # or ClusterIssuer
   # Self-signed CA certificate name
