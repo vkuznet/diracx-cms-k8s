@@ -12,6 +12,7 @@ helm install diracx-cms ./helm/diracx-cms \
   -f ./helm/values-localhost.yaml \
   --namespace diracx-cms --create-namespace \
   --set certManager.createSelfSignedCa=false \
+  --set certManager.enabled=false \
   --set-file certManager.tlsCert=/path/to/ca-chain.crt \
   --set-file certManager.tlsKey=/path/to/ca.key \
   --wait
